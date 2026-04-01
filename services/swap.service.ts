@@ -3,6 +3,7 @@
 // Uses "Convert" terminology (no jargon). Gasless via Account Abstraction.
 
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { getPrices } from "@/services/price.service";
 import { awardXP, checkAndAwardBadges, XP_REWARDS } from "@/services/gamification.service";
 
@@ -96,18 +97,16 @@ export async function executeSwap(
   const quote = await getSwapQuote(fromAsset, toAsset, fromAmount);
   if (!quote) return null;
 
-  const { Decimal } = await import("@prisma/client/runtime/library");
-
   const swap = await prisma.swapRecord.create({
     data: {
       userId,
       fromAsset,
       toAsset,
-      fromAmount: new Decimal(fromAmount.toString()),
-      toAmount: new Decimal(quote.toAmount.toString()),
+      fromAmount: new Prisma.Decimal(fromAmount.toString()),
+      toAmount: new Prisma.Decimal(quote.toAmount.toString()),
       fromAmountCents: BigInt(Math.round(quote.fromValueUsd * 100)),
       toAmountCents: BigInt(Math.round(quote.toValueUsd * 100)),
-      exchangeRate: new Decimal(quote.exchangeRate.toString()),
+      exchangeRate: new Prisma.Decimal(quote.exchangeRate.toString()),
       // txHash would be set after the on-chain UserOp confirms
     },
   });
