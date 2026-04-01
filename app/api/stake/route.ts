@@ -6,7 +6,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { processStake, InsufficientFundsError } from "@/services/transaction.service";
 import { prisma } from "@/lib/prisma";
-import { Prisma } from "@prisma/client";
 
 const BodySchema = z.object({
   walletAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
