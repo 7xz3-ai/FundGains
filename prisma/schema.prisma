@@ -1,0 +1,174 @@
+// prisma/schema.prisma
+// ApexYield Anonymous — Non-custodial staking platform on Base
+// Identity = wallet address. Zero PII stored.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// ENUMS
+// ---------------------------------------------------------------------------
+
+enum TransactionType {
+  DEPOSIT      // P2P inbound detected by Alchemy webhook
+  WITHDRAWAL   // User withdraws to external address
+  STAKE        // User deposits into a Vault
+  UNSTAKE      // User exits a Vault position
+  YIELD_CREDIT // Cron-accrued yield credited to staked balance
+}
+
+enum TransactionStatus {
+  PENDING
+  PROCESSING
+  CONFIRMED
+  FAILED
+}
+
+// ---------------------------------------------------------------------------
+// USER
+// walletAddress is the ONLY identity — no email, no name, no IP
+// ---------------------------------------------------------------------------
+
+model User {
+  id            String   @id @default(cuid())
+  walletAddress String   @unique // 0x... checksum address — THE identity
+  ensName       String?          // fetched from ENS, cached here
+  cyberAlias    String?          // generated alias from wallet hash
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Balances stored as BigInt cents (USD-equivalent) to avoid float rounding.
+  // 100000 = $1,000.00
+  cashBalance   BigInt @default(0)
+  stakedBalance BigInt @default(0)
+
+  // Optimistic locking — incremented on every balance mutation
+  version Int @default(0)
+
+  // Relations
+  transactions     Transaction[]
+  stakedAssets     StakedAsset[]
+  depositAddresses DepositAddress[]
+
+  @@index([walletAddress])
+}
+
+// ---------------------------------------------------------------------------
+// TRANSACTION — top-level ledger event
+// ---------------------------------------------------------------------------
+
+model Transaction {
+  id             String            @id @default(cuid())
+  userId         String
+  type           TransactionType
+  status         TransactionStatus @default(PENDING)
+
+  // Client generates a UUID per logical request.
+  // @unique prevents duplicate processing on retries.
+  idempotencyKey String @unique
+
+  // All monetary values in BigInt cents (minor units)
+  amountCents BigInt
+  feeCents    BigInt @default(0)
+
+  // For crypto operations
+  assetSymbol      String?  // "ETH", "USDC"
+  assetAmount      Decimal? @db.Decimal(28, 18) // token units, high precision
+  priceAtTimeCents BigInt?  // USD-cents snapshot used for conversion
+
+  // On-chain reference
+  txHash String? // Base transaction hash once confirmed
+
+  errorMessage String?
+  processedAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  // Relations
+  user        User         @relation(fields: [userId], references: [id])
+  stakedAsset StakedAsset? @relation(fields: [stakedAssetId], references: [id])
+  stakedAssetId String?
+
+  @@index([userId, status])
+  @@index([status, createdAt]) // for cleanup cron scanning PENDING/PROCESSING
+  @@index([idempotencyKey])
+  @@index([txHash])
+}
+
+// ---------------------------------------------------------------------------
+// STAKED ASSET — individual vault position
+// ---------------------------------------------------------------------------
+
+model StakedAsset {
+  id          String @id @default(cuid())
+  userId      String
+  vaultId     String // on-chain vault contract address (Base)
+  assetSymbol String // "ETH", "USDC", etc.
+
+  amountStaked Decimal @db.Decimal(28, 18) // token units
+  apyBps       Int     // APY in basis points (500 = 5.00%)
+  principalCents BigInt // USD-cents value at time of staking
+
+  accruedYieldCents BigInt   @default(0)
+  stakedAt          DateTime @default(now())
+  lastYieldAt       DateTime @default(now()) // timestamp of last yield accrual
+  unstakedAt        DateTime? // null while active
+  isActive          Boolean   @default(true)
+
+  // Optimistic locking for yield accrual concurrency
+  version Int @default(0)
+
+  user         User          @relation(fields: [userId], references: [id])
+  transactions Transaction[]
+
+  @@index([userId, isActive])
+  @@index([lastYieldAt]) // for yield cron job
+}
+
+// ---------------------------------------------------------------------------
+// DEPOSIT ADDRESS — P2P Ledger generated addresses per user per asset
+// ---------------------------------------------------------------------------
+
+model DepositAddress {
+  id          String @id @default(cuid())
+  userId      String
+  address     String   @unique // Base address to receive funds (HD derived)
+  assetSymbol String
+  used        Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  detectedAt  DateTime? // when Alchemy webhook fired for this address
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, used])
+  @@index([address])
+}
+
+// ---------------------------------------------------------------------------
+// PRICE CACHE — Layer 2 DB cache for crypto prices
+// Prevents CoinGecko rate-limit exhaustion across server restarts
+// ---------------------------------------------------------------------------
+
+model PriceCache {
+  id       String @id @default(cuid())
+  coinId   String @unique // CoinGecko coin ID e.g. "ethereum"
+  symbol   String         // "ETH"
+  priceCents BigInt       // USD-cents (multiply by 0.01 for USD display)
+
+  marketCapCents BigInt?
+  volume24hCents BigInt?
+  change24hBps   Int?    // 24h price change in basis points
+
+  isStale   Boolean  @default(false)
+  fetchedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([symbol])
+  @@index([fetchedAt])
+}
