@@ -4,7 +4,8 @@
 // if anything throws, Postgres rolls back the entire block (no partial state).
 
 import { prisma } from "@/lib/prisma";
-import { TransactionType, TransactionStatus, Prisma } from "@prisma/client";
+import { TransactionType, TransactionStatus } from "@prisma/client";
+import { Decimal } from "@prisma/client/runtime/library";
 
 export class InsufficientFundsError extends Error {
   constructor() {
@@ -32,7 +33,7 @@ interface BaseTransactionParams {
   idempotencyKey: string; // client-generated UUID per logical request
   amountCents: bigint;
   assetSymbol?: string;
-  assetAmount?: Prisma.Decimal;
+  assetAmount?: Decimal;
   priceAtTimeCents?: bigint;
 }
 
@@ -111,7 +112,7 @@ export async function processStake(params: StakeParams) {
           userId: params.userId,
           vaultId: params.vaultId,
           assetSymbol: params.assetSymbol ?? "ETH",
-          amountStaked: params.assetAmount ?? new Prisma.Decimal(0),
+          amountStaked: params.assetAmount ?? new Decimal(0),
           apyBps: params.apyBps,
           principalCents: params.amountCents,
         },
