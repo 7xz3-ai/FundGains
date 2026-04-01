@@ -5,8 +5,8 @@ const nextConfig = {
     serverComponentsExternalPackages: ["@prisma/client"],
   },
   webpack: (config) => {
-    config.resolve.fallback = { fs: false, net: false, tls: false };
-    config.externals.push('pino-pretty', 'lokijs', 'encoding', '@react-native-async-storage/async-storage');
+    config.resolve.fallback = { fs: false, net: false, tls: false, '@react-native-async-storage/async-storage': false };
+    config.externals.push('pino-pretty', 'lokijs', 'encoding');
     return config;
   },
 };
