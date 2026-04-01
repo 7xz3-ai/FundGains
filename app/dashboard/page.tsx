@@ -12,6 +12,8 @@ import {
   formatCents,
   type Holding,
 } from "@/services/projections.service";
+import NotificationCenter from "@/components/notification-center";
+import VaultRiskBadge from "@/components/vault-risk-badge";
 
 interface UserData {
   displayName: string;
@@ -71,6 +73,13 @@ export default function DashboardPage() {
         const priceData = await priceRes.json();
         setUserData(user);
         setPrices(priceData.prices ?? []);
+
+        // Record daily check-in (for streak tracking)
+        fetch("/api/gamification", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ walletAddress: address }),
+        }).catch(() => {});
       } catch (e) {
         console.error(e);
       } finally {
@@ -129,7 +138,20 @@ export default function DashboardPage() {
             <span className="gradient-text">ApexYield</span>
             <span className="text-[#4a4a6a] text-sm font-mono ml-2">Anonymous</span>
           </span>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
+            <button
+              onClick={() => router.push("/dashboard/convert")}
+              className="text-xs text-[#8080a0] hover:text-[#00ff88] transition-colors font-mono hidden sm:block"
+            >
+              Convert
+            </button>
+            <button
+              onClick={() => router.push("/dashboard/referral")}
+              className="text-xs text-[#8080a0] hover:text-[#00ff88] transition-colors font-mono hidden sm:block"
+            >
+              Referrals
+            </button>
+            <NotificationCenter />
             <button
               onClick={() => router.push("/profile")}
               className="text-sm text-[#8080a0] hover:text-[#00ff88] transition-colors font-mono"
@@ -142,6 +164,27 @@ export default function DashboardPage() {
       </nav>
 
       <main className="max-w-6xl mx-auto px-4 py-8 space-y-6">
+        {/* Quick Actions */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[
+            { label: "Stake", icon: "📈", href: "/dashboard/vaults" },
+            { label: "Convert", icon: "🔄", href: "/dashboard/convert" },
+            { label: "Refer & Earn", icon: "👥", href: "/dashboard/referral" },
+            { label: "Profile", icon: "⚡", href: "/profile" },
+          ].map((action) => (
+            <button
+              key={action.label}
+              onClick={() => router.push(action.href)}
+              className="card p-4 flex flex-col items-center gap-2 hover:scale-[1.02] transition-transform"
+            >
+              <span className="text-xl">{action.icon}</span>
+              <span className="text-xs font-mono font-semibold text-white">
+                {action.label}
+              </span>
+            </button>
+          ))}
+        </div>
+
         {/* Balance Overview */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="card p-6">
@@ -267,11 +310,12 @@ export default function DashboardPage() {
                   key={a.id}
                   className="flex items-center justify-between p-3 rounded-lg bg-[#0d0d14] border border-[#1a1a2e]"
                 >
-                  <div>
+                  <div className="flex items-center gap-2">
+                    <VaultRiskBadge vaultId={a.vaultId} compact />
                     <span className="font-mono text-sm text-white font-semibold">
                       {a.assetSymbol}
                     </span>
-                    <span className="text-xs text-[#4a4a6a] font-mono ml-2">
+                    <span className="text-xs text-[#4a4a6a] font-mono">
                       {(a.apyBps / 100).toFixed(2)}% APY
                     </span>
                   </div>

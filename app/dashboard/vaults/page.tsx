@@ -6,6 +6,7 @@
 import { useAccount } from "wagmi";
 import { useRouter } from "next/navigation";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
+import VaultRiskBadge from "@/components/vault-risk-badge";
 
 const MOCK_VAULTS = [
   {
@@ -81,11 +82,14 @@ export default function VaultsPage() {
                     {vault.chain} · {vault.asset}
                   </p>
                 </div>
-                <span
-                  className={`text-xs font-mono font-semibold ${RISK_COLORS[vault.risk] ?? "text-[#8080a0]"}`}
-                >
-                  {vault.risk} Risk
-                </span>
+                <div className="flex items-center gap-2">
+                  <VaultRiskBadge vaultId={vault.id} />
+                  <span
+                    className={`text-xs font-mono font-semibold ${RISK_COLORS[vault.risk] ?? "text-[#8080a0]"}`}
+                  >
+                    {vault.risk} Risk
+                  </span>
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
