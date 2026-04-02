@@ -128,6 +128,42 @@ const DEFAULT_VAULTS = [
     impermanentLossRisk: 1,
     smartContractAge: 200,
   },
+  {
+    vaultId: "vault-paxg-gold",
+    assetSymbol: "PAXG",
+    riskScore: 1,
+    auditStatus: "regulated",
+    auditor: "NYDFS",
+    liquidityDepth: 5_000_000_000n,
+    tvlCents: 5_000_000_000n,
+    impermanentLossRisk: 0,
+    smartContractAge: 1200,
+    stabilityGrade: "AAA",
+  },
+  {
+    vaultId: "vault-usdy-treasury",
+    assetSymbol: "USDY",
+    riskScore: 1,
+    auditStatus: "audited",
+    auditor: "Ondo",
+    liquidityDepth: 25_000_000_000n,
+    tvlCents: 25_000_000_000n,
+    impermanentLossRisk: 0,
+    smartContractAge: 450,
+    stabilityGrade: "AAA",
+  },
+  {
+    vaultId: "vault-ref-rental",
+    assetSymbol: "REF",
+    riskScore: 3,
+    auditStatus: "verified",
+    auditor: "Lofty",
+    liquidityDepth: 850_000_000n,
+    tvlCents: 850_000_000n,
+    impermanentLossRisk: 0,
+    smartContractAge: 320,
+    stabilityGrade: "A+",
+  },
 ];
 
 /**
@@ -145,6 +181,7 @@ export async function seedVaultRiskScores(): Promise<void> {
         tvlCents: vault.tvlCents,
         impermanentLossRisk: vault.impermanentLossRisk,
         smartContractAge: vault.smartContractAge,
+        stabilityGrade: (vault as any).stabilityGrade,
         lastUpdated: new Date(),
       },
       create: vault,
@@ -173,6 +210,7 @@ export async function getVaultRiskScore(vaultId: string) {
     liquidityDepthUsd: Number(score.liquidityDepth) / 100,
     impermanentLossRisk: score.impermanentLossRisk,
     contractAgeDays: score.smartContractAge,
+    stabilityGrade: score.stabilityGrade,
     lastUpdated: score.lastUpdated,
   };
 }

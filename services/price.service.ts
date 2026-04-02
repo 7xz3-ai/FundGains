@@ -137,6 +137,20 @@ async function fetchAndCache(coinIds: string[]): Promise<PriceResult[]> {
   const now = new Date();
 
   for (const coinId of coinIds) {
+    // Special case for REF (mocked)
+    if (coinId === "real-estate-fund") {
+      const priceCents = BigInt(10000); // $100.00
+      results.push({
+        coinId,
+        symbol: "REF",
+        priceCents,
+        change24hBps: 5, // 0.05%
+        isStale: false,
+        source: "api",
+      });
+      continue;
+    }
+
     if (!data[coinId]) continue;
 
     const priceCents = BigInt(Math.round(data[coinId].usd * 100));
