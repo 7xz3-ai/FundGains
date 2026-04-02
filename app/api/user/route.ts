@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
     cyberAlias: user.cyberAlias,
     cashBalanceUsd: Number(user.cashBalance) / 100,
     stakedBalanceUsd: Number(user.stakedBalance) / 100,
-    stakedAssets: stakedAssets.map((a) => ({
+    stakedAssets: stakedAssets.map((a: typeof stakedAssets[number]) => ({
       id: a.id,
       assetSymbol: a.assetSymbol,
       vaultId: a.vaultId,
