@@ -9,12 +9,12 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@prisma/client": "^7.6.0",
+    "@prisma/client": "^6.2.1",
     "@rainbow-me/rainbowkit": "^2.2.10",
     "@tanstack/react-query": "^5.96.0",
     "alchemy-sdk": "^3.6.5",
     "next": "14.2.35",
-    "prisma": "^7.6.0",
+    "prisma": "^6.2.1",
     "react": "^18",
     "react-dom": "^18",
     "viem": "^2.47.6",

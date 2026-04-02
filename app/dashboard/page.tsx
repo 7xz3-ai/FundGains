@@ -54,8 +54,11 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!isConnected) {
       router.push("/");
-      return;
     }
+  }, [isConnected, router]);
+
+  useEffect(() => {
+    if (!isConnected) return;
 
     async function load() {
       if (!address) return;

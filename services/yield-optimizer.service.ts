@@ -117,7 +117,14 @@ export async function analyzePortfolio(userId: string): Promise<void> {
     });
     if (!existing) {
       await prisma.aIAlert.create({
-        data: { userId, ...alert },
+        data: {
+          userId,
+          type: alert.type,
+          title: alert.title,
+          message: alert.message,
+          actionUrl: alert.actionUrl,
+          metadata: alert.metadata as any,
+        },
       });
     }
   }

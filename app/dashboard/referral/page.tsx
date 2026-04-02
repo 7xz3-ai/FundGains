@@ -30,16 +30,24 @@ export default function ReferralPage() {
       .then(setStats);
   }, [isConnected, address]);
 
+  useEffect(() => {
+    if (!isConnected) {
+      router.push("/");
+    }
+  }, [isConnected, router]);
+
   function handleCopy() {
     if (!stats?.referralCode) return;
-    const link = `${window.location.origin}?ref=${stats.referralCode}`;
-    navigator.clipboard.writeText(link);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    const link = `${origin}?ref=${stats.referralCode}`;
+    if (typeof navigator !== "undefined") {
+      navigator.clipboard.writeText(link);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
   }
 
   if (!isConnected) {
-    router.push("/");
     return null;
   }
 
