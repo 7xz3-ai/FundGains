@@ -3,6 +3,7 @@
 // Uses "Convert" terminology (no jargon). Gasless via Account Abstraction.
 
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { getPrices } from "@/services/price.service";
 import { awardXP, checkAndAwardBadges, XP_REWARDS } from "@/services/gamification.service";
 

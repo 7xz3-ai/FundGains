@@ -4,7 +4,7 @@
 // actionable Smart Alerts when better yield is available.
 
 import { prisma } from "@/lib/prisma";
-import { AlertType } from "@prisma/client";
+import { AlertType, Prisma } from "@prisma/client";
 
 // Vault registry — in production, this comes from on-chain / API
 const VAULT_REGISTRY = [
@@ -57,7 +57,7 @@ export async function analyzePortfolio(userId: string): Promise<void> {
     title: string;
     message: string;
     actionUrl?: string;
-    metadata?: Record<string, unknown>;
+    metadata?: Prisma.InputJsonValue;
   }> = [];
 
   // --- 1. Yield Upgrade Opportunities ---
