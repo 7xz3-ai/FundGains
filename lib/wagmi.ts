@@ -1,19 +1,56 @@
 // lib/wagmi.ts
 // Wagmi + RainbowKit configuration — Base chain as default (low-fee L2)
+// MetaMask + Trust Wallet + WalletConnect explicitly configured.
 
-import { getDefaultConfig } from "@rainbow-me/rainbowkit";
+import { connectorsForWallets } from "@rainbow-me/rainbowkit";
+import {
+  metaMaskWallet,
+  trustWallet,
+  walletConnectWallet,
+  rainbowWallet,
+  coinbaseWallet,
+} from "@rainbow-me/rainbowkit/wallets";
+import { createConfig, http } from "wagmi";
 import { base, baseSepolia } from "wagmi/chains";
 
-export const wagmiConfig = getDefaultConfig({
-  appName: "ApexYield Anonymous",
-  projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "3fcc6b4468bd9335c453c80775a61d1f", // Placeholder for build-time static generation
-  chains: [
-    base,
-    ...(process.env.NEXT_PUBLIC_ENABLE_TESTNETS === "true"
-      ? [baseSepolia]
-      : []),
+const projectId =
+  process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ||
+  "e03ef3474036bb3c9f998b0c5a1f7af4";
+
+const connectors = connectorsForWallets(
+  [
+    {
+      groupName: "Recommended",
+      wallets: [metaMaskWallet, trustWallet, coinbaseWallet],
+    },
+    {
+      groupName: "Other",
+      wallets: [walletConnectWallet, rainbowWallet],
+    },
   ],
-  ssr: true, // required for Next.js App Router
+  {
+    appName: "ApexYield Anonymous",
+    projectId,
+  }
+);
+
+const chains = [
+  base,
+  ...(process.env.NEXT_PUBLIC_ENABLE_TESTNETS === "true"
+    ? [baseSepolia]
+    : []),
+] as const;
+
+export const wagmiConfig = createConfig({
+  connectors,
+  chains,
+  transports: {
+    [base.id]: http(),
+    ...(process.env.NEXT_PUBLIC_ENABLE_TESTNETS === "true"
+      ? { [baseSepolia.id]: http() }
+      : {}),
+  },
+  ssr: true,
 });
 
 export { base as defaultChain };
