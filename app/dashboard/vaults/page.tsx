@@ -1,7 +1,7 @@
 "use client";
 
 // app/dashboard/vaults/page.tsx
-// Browse available staking vaults on Base.
+// Browse available staking vaults on Base — premium fintech design.
 
 import { useAccount } from "wagmi";
 import { useRouter } from "next/navigation";
@@ -39,10 +39,10 @@ const MOCK_VAULTS = [
 ];
 
 const RISK_COLORS: Record<string, string> = {
-  Minimal: "text-[#00ff88]",
-  Low: "text-[#00aaff]",
-  Medium: "text-[#ffaa00]",
-  High: "text-[#ff4466]",
+  Minimal: "text-[#34D399]",
+  Low: "text-[#2D9FFF]",
+  Medium: "text-[#F59E0B]",
+  High: "text-[#EF4444]",
 };
 
 export default function VaultsPage() {
@@ -50,65 +50,77 @@ export default function VaultsPage() {
   const router = useRouter();
 
   return (
-    <div className="min-h-screen cyber-grid">
-      <nav className="border-b border-[#1a1a2e] bg-[#050508]/80 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
+    <div className="min-h-screen bg-mesh">
+      <nav className="bg-base/80 backdrop-blur-xl border-b border-white/[0.04] sticky top-0 z-50">
+        <div className="max-w-4xl mx-auto px-6 h-16 flex items-center justify-between">
           <button
             onClick={() => router.push("/dashboard")}
-            className="text-sm font-mono text-[#4a4a6a] hover:text-[#00ff88] transition-colors"
+            className="text-[13px] text-text-muted hover:text-text-primary transition-colors flex items-center gap-1.5"
           >
-            ← Dashboard
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <polyline points="15,18 9,12 15,6" />
+            </svg>
+            Dashboard
           </button>
-          <span className="font-bold gradient-text">Vaults</span>
+          <span className="font-semibold gradient-text text-[15px]">Vaults</span>
           <ConnectButton showBalance={false} accountStatus="avatar" />
         </div>
       </nav>
 
-      <main className="max-w-4xl mx-auto px-4 py-8">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-white">Staking Vaults</h1>
-          <p className="text-sm text-[#4a4a6a] font-mono mt-1">
-            Non-custodial vaults on Base — deposit assets, earn yield
+      <main className="max-w-4xl mx-auto px-6 py-10">
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-text-primary tracking-tight">
+            Staking Vaults
+          </h1>
+          <p className="text-[14px] text-text-muted mt-1.5">
+            Non-custodial vaults on Base. Deposit assets, earn yield.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {MOCK_VAULTS.map((vault) => (
-            <div key={vault.id} className="card p-6 cursor-pointer hover:scale-[1.01] transition-transform">
-              <div className="flex items-start justify-between mb-4">
+            <div
+              key={vault.id}
+              className="card p-7 cursor-pointer hover:scale-[1.01] transition-transform"
+            >
+              <div className="flex items-start justify-between mb-5">
                 <div>
-                  <h3 className="font-semibold text-white">{vault.name}</h3>
-                  <p className="text-xs font-mono text-[#4a4a6a] mt-0.5">
-                    {vault.chain} · {vault.asset}
+                  <h3 className="text-[16px] font-semibold text-text-primary">
+                    {vault.name}
+                  </h3>
+                  <p className="text-[13px] text-text-muted mt-0.5">
+                    {vault.chain} &middot; {vault.asset}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
                   <VaultRiskBadge vaultId={vault.id} />
                   <span
-                    className={`text-xs font-mono font-semibold ${RISK_COLORS[vault.risk] ?? "text-[#8080a0]"}`}
+                    className={`text-[12px] font-medium ${
+                      RISK_COLORS[vault.risk] ?? "text-text-muted"
+                    }`}
                   >
-                    {vault.risk} Risk
+                    {vault.risk}
                   </span>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-5 mb-5">
                 <div>
-                  <p className="text-xs font-mono text-[#4a4a6a]">APY</p>
-                  <p className="text-xl font-bold text-[#00ff88]">
+                  <p className="text-[12px] text-text-dim mb-1">APY</p>
+                  <p className="text-2xl font-bold gradient-text-green">
                     {(vault.apyBps / 100).toFixed(2)}%
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs font-mono text-[#4a4a6a]">TVL</p>
-                  <p className="text-xl font-bold text-white">
+                  <p className="text-[12px] text-text-dim mb-1">TVL</p>
+                  <p className="text-2xl font-bold text-text-primary">
                     ${(vault.tvlUsd / 1_000_000).toFixed(1)}M
                   </p>
                 </div>
               </div>
 
-              <button className="mt-4 w-full py-2 rounded-lg border border-[#00ff88]/40 text-[#00ff88] text-sm font-mono hover:bg-[#00ff88]/10 transition-colors">
-                Stake into Vault →
+              <button className="w-full py-3 rounded-2xl btn-primary text-[14px]">
+                Stake into Vault
               </button>
             </div>
           ))}

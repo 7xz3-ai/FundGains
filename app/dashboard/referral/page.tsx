@@ -1,7 +1,7 @@
 "use client";
 
 // app/dashboard/referral/page.tsx
-// Tiered Referral dashboard — share code, track earnings across Tier 1 & 2.
+// Tiered Referral dashboard — premium fintech design.
 
 import { useAccount } from "wagmi";
 import { useRouter } from "next/navigation";
@@ -47,52 +47,53 @@ export default function ReferralPage() {
     }
   }
 
-  if (!isConnected) {
-    return null;
-  }
+  if (!isConnected) return null;
 
   return (
-    <div className="min-h-screen cyber-grid">
-      <nav className="border-b border-[#1a1a2e] bg-[#050508]/80 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-2xl mx-auto px-4 h-16 flex items-center justify-between">
+    <div className="min-h-screen bg-mesh">
+      <nav className="bg-base/80 backdrop-blur-xl border-b border-white/[0.04] sticky top-0 z-50">
+        <div className="max-w-2xl mx-auto px-6 h-16 flex items-center justify-between">
           <button
             onClick={() => router.push("/dashboard")}
-            className="text-sm font-mono text-[#4a4a6a] hover:text-[#00ff88] transition-colors"
+            className="text-[13px] text-text-muted hover:text-text-primary transition-colors flex items-center gap-1.5"
           >
-            ← Dashboard
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <polyline points="15,18 9,12 15,6" />
+            </svg>
+            Dashboard
           </button>
-          <span className="font-bold gradient-text">Referrals</span>
+          <span className="font-semibold gradient-text text-[15px]">Referrals</span>
           <ConnectButton showBalance={false} accountStatus="avatar" />
         </div>
       </nav>
 
-      <main className="max-w-2xl mx-auto px-4 py-8 space-y-6">
+      <main className="max-w-2xl mx-auto px-6 py-10 space-y-6">
         {/* Hero */}
-        <div className="card p-6 text-center border-[#00ff88]/10">
-          <h1 className="text-2xl font-bold text-white mb-2">
+        <div className="card p-8 text-center">
+          <h1 className="text-2xl font-bold text-text-primary tracking-tight mb-2">
             Earn While They Earn
           </h1>
-          <p className="text-sm text-[#4a4a6a] font-mono max-w-md mx-auto">
-            Share your referral link. Earn 5% of your friends' yield (Tier 1)
-            and 1% of their friends' yield (Tier 2). Passive income, compounded.
+          <p className="text-[14px] text-text-muted max-w-md mx-auto leading-relaxed">
+            Share your referral link. Earn 5% of your friends&apos; yield (Tier 1)
+            and 1% of their friends&apos; yield (Tier 2). Passive income, compounded.
           </p>
         </div>
 
         {/* Referral Code */}
-        <div className="card p-6">
-          <p className="text-xs font-mono text-[#4a4a6a] uppercase tracking-widest mb-3">
+        <div className="card p-7">
+          <p className="text-[13px] text-text-muted font-medium mb-3">
             Your Referral Code
           </p>
           <div className="flex items-center gap-3">
-            <div className="flex-1 bg-[#12121c] border border-[#1a1a2e] rounded-lg px-4 py-3 font-mono text-lg text-[#00ff88]">
+            <div className="flex-1 rounded-2xl bg-white/[0.02] border border-white/[0.04] px-5 py-3.5 text-[18px] font-semibold text-accent">
               {stats?.referralCode ?? "..."}
             </div>
             <button
               onClick={handleCopy}
-              className={`px-4 py-3 rounded-lg text-sm font-mono font-bold transition-all ${
+              className={`px-5 py-3.5 rounded-2xl text-[14px] font-semibold transition-all ${
                 copied
-                  ? "bg-[#00ff88] text-[#050508]"
-                  : "border border-[#00ff88]/40 text-[#00ff88] hover:bg-[#00ff88]/10"
+                  ? "bg-[#34D399] text-white"
+                  : "btn-primary"
               }`}
             >
               {copied ? "Copied!" : "Copy Link"}
@@ -102,65 +103,65 @@ export default function ReferralPage() {
 
         {/* Tier Stats */}
         <div className="grid grid-cols-3 gap-4">
-          <div className="card p-4 text-center">
-            <p className="text-xs font-mono text-[#4a4a6a] uppercase">
-              Friends
-            </p>
-            <p className="text-2xl font-bold text-white mt-1">
+          <div className="card p-5 text-center">
+            <p className="text-[12px] text-text-dim mb-1.5">Friends</p>
+            <p className="text-2xl font-bold text-text-primary">
               {stats?.directReferrals ?? 0}
             </p>
           </div>
-          <div className="card p-4 text-center">
-            <p className="text-xs font-mono text-[#4a4a6a] uppercase">
-              Tier 1 Earned
-            </p>
-            <p className="text-2xl font-bold text-[#00ff88] mt-1">
+          <div className="card p-5 text-center">
+            <p className="text-[12px] text-text-dim mb-1.5">Tier 1 Earned</p>
+            <p className="text-2xl font-bold gradient-text-green">
               ${stats?.tier1EarnedUsd.toFixed(2) ?? "0.00"}
             </p>
-            <p className="text-[10px] text-[#4a4a6a] font-mono">5% yield-share</p>
+            <p className="text-[11px] text-text-dim mt-0.5">5% yield-share</p>
           </div>
-          <div className="card p-4 text-center">
-            <p className="text-xs font-mono text-[#4a4a6a] uppercase">
-              Tier 2 Earned
-            </p>
-            <p className="text-2xl font-bold text-[#00aaff] mt-1">
+          <div className="card p-5 text-center">
+            <p className="text-[12px] text-text-dim mb-1.5">Tier 2 Earned</p>
+            <p className="text-2xl font-bold text-[#818CF8]">
               ${stats?.tier2EarnedUsd.toFixed(2) ?? "0.00"}
             </p>
-            <p className="text-[10px] text-[#4a4a6a] font-mono">1% yield-share</p>
+            <p className="text-[11px] text-text-dim mt-0.5">1% yield-share</p>
           </div>
         </div>
 
         {/* Total */}
-        <div className="card p-6 border-[#00ff88]/20 text-center">
-          <p className="text-xs font-mono text-[#4a4a6a] uppercase tracking-widest mb-1">
-            Total Referral Earnings
-          </p>
-          <p className="text-3xl font-bold text-[#00ff88]">
+        <div className="card p-8 text-center border-accent/10">
+          <p className="text-[13px] text-text-muted mb-2">Total Referral Earnings</p>
+          <p className="text-3xl font-bold gradient-text-green tracking-tight">
             ${stats?.totalEarnedUsd.toFixed(2) ?? "0.00"}
           </p>
         </div>
 
         {/* How It Works */}
-        <div className="card p-6">
-          <h2 className="text-sm font-semibold text-white mb-4 font-mono uppercase tracking-widest">
+        <div className="card p-7">
+          <h2 className="text-[15px] font-semibold text-text-primary mb-5">
             How Tiered Rewards Work
           </h2>
-          <div className="space-y-3 text-sm font-mono">
-            <div className="flex items-start gap-3">
-              <span className="text-[#00ff88] font-bold w-6">T1</span>
+          <div className="space-y-4">
+            <div className="flex items-start gap-4">
+              <div className="w-8 h-8 rounded-xl bg-[#34D399]/10 flex items-center justify-center flex-shrink-0">
+                <span className="text-[13px] font-bold text-[#34D399]">T1</span>
+              </div>
               <div>
-                <p className="text-white">Direct Referral (5% yield-share)</p>
-                <p className="text-xs text-[#4a4a6a]">
+                <p className="text-[14px] font-medium text-text-primary">
+                  Direct Referral (5% yield-share)
+                </p>
+                <p className="text-[13px] text-text-muted mt-0.5 leading-relaxed">
                   When your friend earns staking yield, you automatically receive 5% as a bonus.
                 </p>
               </div>
             </div>
-            <div className="flex items-start gap-3">
-              <span className="text-[#00aaff] font-bold w-6">T2</span>
+            <div className="flex items-start gap-4">
+              <div className="w-8 h-8 rounded-xl bg-[#818CF8]/10 flex items-center justify-center flex-shrink-0">
+                <span className="text-[13px] font-bold text-[#818CF8]">T2</span>
+              </div>
               <div>
-                <p className="text-white">Friend-of-Friend (1% yield-share)</p>
-                <p className="text-xs text-[#4a4a6a]">
-                  When your friend's friends earn yield, you receive 1%. Network effects, compounded.
+                <p className="text-[14px] font-medium text-text-primary">
+                  Friend-of-Friend (1% yield-share)
+                </p>
+                <p className="text-[13px] text-text-muted mt-0.5 leading-relaxed">
+                  When your friend&apos;s friends earn yield, you receive 1%. Network effects, compounded.
                 </p>
               </div>
             </div>
@@ -169,20 +170,26 @@ export default function ReferralPage() {
 
         {/* Recent Earnings */}
         {stats?.recentEarnings && stats.recentEarnings.length > 0 && (
-          <div className="card p-6">
-            <h2 className="text-sm font-semibold text-white mb-3">
+          <div className="card p-7">
+            <h2 className="text-[15px] font-semibold text-text-primary mb-4">
               Recent Earnings
             </h2>
-            <div className="space-y-2">
+            <div className="space-y-1">
               {stats.recentEarnings.map((e, i) => (
                 <div
                   key={i}
-                  className="flex items-center justify-between py-1.5 border-b border-[#1a1a2e] last:border-0 text-sm font-mono"
+                  className="flex items-center justify-between py-2.5 border-b border-white/[0.04] last:border-0"
                 >
-                  <span className={e.tier === 1 ? "text-[#00ff88]" : "text-[#00aaff]"}>
+                  <span
+                    className={`text-[13px] font-medium ${
+                      e.tier === 1 ? "text-[#34D399]" : "text-[#818CF8]"
+                    }`}
+                  >
                     Tier {e.tier}
                   </span>
-                  <span className="text-white">+${e.amountUsd.toFixed(4)}</span>
+                  <span className="text-[14px] font-semibold text-text-primary">
+                    +${e.amountUsd.toFixed(4)}
+                  </span>
                 </div>
               ))}
             </div>

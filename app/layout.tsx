@@ -2,7 +2,7 @@
 
 // app/layout.tsx
 // Root layout: RainbowKit + Wagmi + React Query providers.
-// Cyber-Noir dark theme applied globally.
+// Premium fintech dark theme.
 
 import "@rainbow-me/rainbowkit/styles.css";
 import "./globals.css";
@@ -24,15 +24,16 @@ export default function RootLayout({
 
   return (
     <html lang="en" className="dark">
-      <body className={`${inter.className} bg-[#050508] text-white min-h-screen`}>
+      <body className={`${inter.className} bg-[#050508] text-[#F0F0F5] min-h-screen`}>
         <WagmiProvider config={wagmiConfig}>
           <QueryClientProvider client={queryClient}>
             <RainbowKitProvider
               theme={darkTheme({
-                accentColor: "#00ff88",
-                accentColorForeground: "#050508",
-                borderRadius: "medium",
+                accentColor: "#2D9FFF",
+                accentColorForeground: "white",
+                borderRadius: "large",
                 fontStack: "system",
+                overlayBlur: "small",
               })}
             >
               {children}

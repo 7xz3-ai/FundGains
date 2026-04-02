@@ -34,21 +34,13 @@ const connectors = connectorsForWallets(
   }
 );
 
-const chains = [
-  base,
-  ...(process.env.NEXT_PUBLIC_ENABLE_TESTNETS === "true"
-    ? [baseSepolia]
-    : []),
-] as const;
-
+// Always include both chains and transports to satisfy TypeScript
 export const wagmiConfig = createConfig({
   connectors,
-  chains,
+  chains: [base, baseSepolia],
   transports: {
     [base.id]: http(),
-    ...(process.env.NEXT_PUBLIC_ENABLE_TESTNETS === "true"
-      ? { [baseSepolia.id]: http() }
-      : {}),
+    [baseSepolia.id]: http(),
   },
   ssr: true,
 });

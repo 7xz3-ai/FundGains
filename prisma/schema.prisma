@@ -93,6 +93,7 @@ model User {
   swapHistory      SwapRecord[]
   referralEarnings ReferralEarning[] @relation("ReferralEarner")
   referralSources  ReferralEarning[] @relation("ReferralSource")
+  profile          UserProfile?
 
   @@index([walletAddress])
   @@index([referralCode])
@@ -162,6 +163,9 @@ model StakedAsset {
 
   // Optimistic locking for yield accrual concurrency
   version Int @default(0)
+
+  // Vault risk score snapshot at time of staking (1-10)
+  vaultRiskScore Int? // 1 = safest, 10 = riskiest
 
   user         User          @relation(fields: [userId], references: [id])
   transactions Transaction[]
@@ -304,6 +308,29 @@ model SwapRecord {
   user User @relation(fields: [userId], references: [id])
 
   @@index([userId, createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// USER PROFILE — Extended profile linked to wallet address
+// Stores gamification metadata, preferences, and achievements
+// ---------------------------------------------------------------------------
+
+model UserProfile {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  xp            Int      @default(0)
+  level         Int      @default(1)
+  badges        String[] // array of badge names earned
+  title         String?  // display title e.g. "Yield Hunter"
+  avatarSeed    String?  // deterministic avatar seed
+  preferences   Json?    // user preferences (theme, notifications, etc.)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([level])
 }
 
 // ---------------------------------------------------------------------------
