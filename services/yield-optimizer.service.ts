@@ -97,8 +97,8 @@ export async function analyzePortfolio(userId: string): Promise<void> {
   }
 
   // --- 2. Concentration Warning ---
-  const totalStaked = user.stakedAssets.reduce(
-    (sum, a) => sum + Number(a.principalCents),
+  const totalStaked = (user.stakedAssets as any[]).reduce(
+    (sum: number, a: any) => sum + Number(a.principalCents),
     0
   );
 

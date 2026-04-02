@@ -154,14 +154,21 @@ export default function DashboardPage() {
   const { address, isConnected } = useAccount();
   const router = useRouter();
 
-  // Real on-chain ETH balance via wagmi
+  // Hydration guard — prevents SSR/client mismatch for wallet data
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  // Real on-chain ETH balance via wagmi — auto-refreshes every 10s
   const {
     data: balanceData,
     isLoading: balanceLoading,
     refetch: refetchBalance,
   } = useBalance({
     address: address,
-    query: { enabled: !!address },
+    query: {
+      enabled: !!address && mounted,
+      refetchInterval: 10_000, // poll every 10s for real-time updates
+    },
   });
 
   const [userData, setUserData] = useState<UserData | null>(null);
@@ -173,8 +180,8 @@ export default function DashboardPage() {
 
   // Redirect if not connected
   useEffect(() => {
-    if (!isConnected) router.push("/");
-  }, [isConnected, router]);
+    if (mounted && !isConnected) router.push("/");
+  }, [mounted, isConnected, router]);
 
   // Fetch user data + live prices (all 8 assets)
   useEffect(() => {
@@ -293,7 +300,7 @@ export default function DashboardPage() {
 
   // ─── Render Guards ───
 
-  if (!isConnected) return null;
+  if (!mounted || !isConnected) return null;
 
   if (loading) {
     return (
@@ -332,6 +339,19 @@ export default function DashboardPage() {
               className="text-[13px] text-text-muted hover:text-text-primary transition-colors hidden sm:block"
             >
               Referrals
+            </button>
+            <button
+              onClick={() => router.push("/launchpad")}
+              className="text-[13px] text-text-muted hover:text-text-primary transition-colors hidden sm:block"
+            >
+              Launchpad
+            </button>
+            <button
+              onClick={() => router.push("/governance")}
+              className="text-[13px] hover:text-text-primary transition-colors hidden sm:block"
+              style={{ color: "#FFD700" }}
+            >
+              DAO
             </button>
             {/* Recent Activity Button */}
             <button
@@ -469,14 +489,14 @@ export default function DashboardPage() {
                 Deposit
               </button>
             </div>
-            {balanceLoading ? (
+            {balanceLoading || !mounted ? (
               <div className="space-y-2">
                 <div className="h-9 w-48 rounded-xl bg-accent/10 animate-pulse" />
                 <div className="h-4 w-32 rounded-lg bg-white/[0.04] animate-pulse" />
               </div>
             ) : (
               <>
-                <p className="text-3xl font-bold text-text-primary tracking-tight">
+                <p className="text-3xl font-bold tracking-tight" style={{ color: '#2D9FFF' }}>
                   {ethBalanceDisplay}{" "}
                   <span className="text-lg text-text-muted font-medium">ETH</span>
                 </p>
@@ -493,6 +513,8 @@ export default function DashboardPage() {
                     minimumFractionDigits: 2,
                   })}{" "}
                   / ETH
+                  {" · "}
+                  <span className="text-accent">Live</span>
                 </p>
               </>
             )}
@@ -777,11 +799,13 @@ export default function DashboardPage() {
         )}
 
         {/* ─── Mobile Nav (visible on small screens) ─── */}
-        <div className="sm:hidden grid grid-cols-4 gap-2 pb-4">
+        <div className="sm:hidden grid grid-cols-3 gap-2 pb-4">
           {[
             { label: "Convert", href: "/convert" },
             { label: "Liquidity", href: "/liquidity" },
             { label: "Referrals", href: "/dashboard/referral" },
+            { label: "Launchpad", href: "/launchpad" },
+            { label: "DAO", href: "/governance" },
             { label: "Profile", href: "/profile" },
           ].map((item) => (
             <button

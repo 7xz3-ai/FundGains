@@ -223,7 +223,7 @@ export async function getAllVaultRiskScores() {
     orderBy: { riskScore: "asc" },
   });
 
-  return scores.map((s) => ({
+  return scores.map((s: any) => ({
     vaultId: s.vaultId,
     assetSymbol: s.assetSymbol,
     riskScore: s.riskScore,

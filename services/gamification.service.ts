@@ -140,7 +140,7 @@ export async function checkAndAwardBadges(userId: string): Promise<BadgeType[]> 
 
   // YIELD_HUNTER: total accrued yield > 1000 cents ($10)
   const totalYield = user.stakedAssets.reduce(
-    (sum, a) => sum + Number(a.accruedYieldCents),
+    (sum: number, a: { accruedYieldCents: bigint }) => sum + Number(a.accruedYieldCents),
     0
   );
   if (totalYield >= 1000) {
@@ -148,7 +148,7 @@ export async function checkAndAwardBadges(userId: string): Promise<BadgeType[]> 
   }
 
   // DIVERSIFIER: staked in 3+ different vaults
-  const uniqueVaults = new Set(user.stakedAssets.map((a) => a.vaultId));
+  const uniqueVaults = new Set(user.stakedAssets.map((a: { vaultId: string }) => a.vaultId));
   if (uniqueVaults.size >= 3) {
     if (await awardBadge(userId, BadgeType.DIVERSIFIER)) awarded.push(BadgeType.DIVERSIFIER);
   }
@@ -170,7 +170,7 @@ export async function checkAndAwardBadges(userId: string): Promise<BadgeType[]> 
 
   // DIAMOND_HANDS: any position staked for 30+ days
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-  if (user.stakedAssets.some((a) => a.stakedAt <= thirtyDaysAgo)) {
+  if (user.stakedAssets.some((a: { stakedAt: Date }) => a.stakedAt <= thirtyDaysAgo)) {
     if (await awardBadge(userId, BadgeType.DIAMOND_HANDS)) awarded.push(BadgeType.DIAMOND_HANDS);
   }
 
@@ -270,7 +270,7 @@ export async function getGamificationSummary(userId: string) {
     xp: user.xp,
     level: user.level,
     ...xpToNextLevel(user.xp),
-    badges: badges.map((b) => ({ type: b.badge, earnedAt: b.earnedAt })),
+    badges: badges.map((b: { badge: BadgeType; earnedAt: Date }) => ({ type: b.badge, earnedAt: b.earnedAt })),
     streak: streak
       ? {
           current: streak.currentStreak,

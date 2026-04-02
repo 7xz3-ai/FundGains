@@ -24,8 +24,8 @@ export async function distributeSuccessFees(): Promise<void> {
 
     for (const follower of allFollowers) {
       // Calculate total yield accrued for this follower
-      const totalYieldCents = follower.stakedAssets.reduce(
-        (sum, asset) => sum + asset.accruedYieldCents,
+      const totalYieldCents = (follower.stakedAssets as any[]).reduce(
+        (sum: bigint, asset: any) => sum + asset.accruedYieldCents,
         0n
       );
 
@@ -38,7 +38,8 @@ export async function distributeSuccessFees(): Promise<void> {
 
         if (totalYieldCents > 0n) {
           // Atomic transaction: deduct from follower, credit to trader
-          await prisma.$transaction(async (tx) => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await prisma.$transaction(async (tx: any) => {
             // Success fee: 1% of accrued yield
             const successFeeCents = (totalYieldCents * 1n) / 100n;
 
@@ -102,12 +103,12 @@ export async function getTraderSuccessFeeEarnings(
     },
   });
 
-  const totalEarningsCents = earnings.reduce(
-    (sum, e) => sum + Number(e.amountCents),
+  const totalEarningsCents = (earnings as any[]).reduce(
+    (sum: number, e: any) => sum + Number(e.amountCents),
     0
   );
 
-  const uniqueFollowers = new Set(earnings.map((e) => e.sourceId)).size;
+  const uniqueFollowers = new Set((earnings as any[]).map((e: any) => e.sourceId)).size;
   const averageFeePerFollower =
     uniqueFollowers > 0 ? totalEarningsCents / uniqueFollowers : 0;
 

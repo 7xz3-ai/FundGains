@@ -8,6 +8,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 // ---------------------------------------------------------------------------
@@ -99,6 +100,11 @@ model User {
   referralEarnings ReferralEarning[] @relation("ReferralEarner")
   referralSources  ReferralEarning[] @relation("ReferralSource")
   profile          UserProfile?
+
+  // Phase 8: Sovereign State
+  proposals        Proposal[]  @relation("ProposalCreator")
+  votes            Vote[]      @relation("Voter")
+  contributions    LaunchpadContribution[] @relation("LaunchpadContributor")
 
   @@index([walletAddress])
   @@index([referralCode])
@@ -364,4 +370,123 @@ model ReferralEarning {
 
   @@index([earnerId, paidOut])
   @@index([sourceId])
+}
+
+// ---------------------------------------------------------------------------
+// PHASE 8: SOVEREIGN STATE — Launchpad, Governance, Treasury
+// ---------------------------------------------------------------------------
+
+enum ProposalStatus {
+  ACTIVE
+  PASSED
+  REJECTED
+  EXECUTED
+}
+
+enum VoteChoice {
+  FOR
+  AGAINST
+  ABSTAIN
+}
+
+// Community Treasury — funded by 0.1% of every Convert fee
+model Treasury {
+  id              String   @id @default(cuid())
+  totalBalanceCents BigInt @default(0) // total treasury balance in cents
+  totalInflowCents  BigInt @default(0) // lifetime inflows
+  totalOutflowCents BigInt @default(0) // lifetime outflows (proposal payouts)
+  lastUpdated     DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// Treasury inflow/outflow ledger
+model TreasuryTransaction {
+  id          String   @id @default(cuid())
+  amountCents BigInt
+  type        String   // "SWAP_FEE", "PROPOSAL_PAYOUT"
+  description String?
+  swapRecordId String? // link to swap that generated the fee
+  proposalId  String?  // link to proposal that triggered payout
+  createdAt   DateTime @default(now())
+
+  @@index([type, createdAt])
+}
+
+// Governance Proposal
+model Proposal {
+  id              String         @id @default(cuid())
+  creatorId       String
+  creator         User           @relation("ProposalCreator", fields: [creatorId], references: [id])
+  title           String
+  description     String
+  requestedCents  BigInt         @default(0) // treasury funds requested
+  status          ProposalStatus @default(ACTIVE)
+  votesFor        BigInt         @default(0) // weighted vote power
+  votesAgainst    BigInt         @default(0)
+  votesAbstain    BigInt         @default(0)
+  totalVoters     Int            @default(0)
+  quorumRequired  BigInt         @default(100000) // minimum vote power needed
+  endsAt          DateTime       // voting deadline
+  executedAt      DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  votes Vote[]
+
+  @@index([status, endsAt])
+  @@index([creatorId])
+}
+
+// Individual vote on a proposal — weighted by balance * XP
+model Vote {
+  id          String     @id @default(cuid())
+  proposalId  String
+  proposal    Proposal   @relation(fields: [proposalId], references: [id])
+  voterId     String
+  voter       User       @relation("Voter", fields: [voterId], references: [id])
+  choice      VoteChoice
+  votePower   BigInt     // balance_cents * sqrt(xp) — weighted voting
+  createdAt   DateTime   @default(now())
+
+  @@unique([proposalId, voterId]) // one vote per proposal per user
+  @@index([proposalId])
+  @@index([voterId])
+}
+
+// Launchpad Project — community-funded token launches
+model LaunchpadProject {
+  id              String   @id @default(cuid())
+  name            String
+  ticker          String   // e.g. "APEX"
+  description     String
+  targetCents     BigInt   // fundraising target
+  raisedCents     BigInt   @default(0)
+  minContribCents BigInt   @default(1000) // $10 minimum
+  maxContribCents BigInt   @default(10000000) // $100k maximum
+  tokenPrice      String   // display price e.g. "$0.01"
+  totalSupply     String   // e.g. "1,000,000,000"
+  status          String   @default("ACTIVE") // ACTIVE, FUNDED, CLOSED
+  startsAt        DateTime @default(now())
+  endsAt          DateTime
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  contributions LaunchpadContribution[]
+
+  @@index([status, endsAt])
+}
+
+// Individual contribution to a launchpad project
+model LaunchpadContribution {
+  id          String   @id @default(cuid())
+  projectId   String
+  project     LaunchpadProject @relation(fields: [projectId], references: [id])
+  userId      String
+  user        User     @relation("LaunchpadContributor", fields: [userId], references: [id])
+  amountCents BigInt
+  createdAt   DateTime @default(now())
+
+  @@unique([projectId, userId]) // one contribution per user per project
+  @@index([projectId])
+  @@index([userId])
 }

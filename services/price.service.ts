@@ -90,7 +90,7 @@ export async function getPrices(coinIds: string[]): Promise<PriceResult[]> {
   }
 
   // Coins not found in DB at all
-  const foundInDb = new Set(dbRows.map((r) => r.coinId));
+  const foundInDb = new Set(dbRows.map((r: { coinId: string }) => r.coinId));
   const missing = needsDbLookup.filter((id) => !foundInDb.has(id));
   const toFetch = [...new Set([...stillNeedFetch, ...missing])];
 

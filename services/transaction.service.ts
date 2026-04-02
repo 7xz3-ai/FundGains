@@ -70,7 +70,7 @@ export async function processStake(params: StakeParams) {
   if (existing?.status === TransactionStatus.CONFIRMED) return existing;
 
   return prisma.$transaction(
-    async (tx) => {
+    async (tx: any) => {
       // Lock user row
       const users = await tx.$queryRaw<
         Array<{ id: string; cashBalance: bigint; stakedBalance: bigint; version: number }>
@@ -143,7 +143,7 @@ export async function processUnstake(
   if (existing?.status === TransactionStatus.CONFIRMED) return existing;
 
   return prisma.$transaction(
-    async (tx) => {
+    async (tx: any) => {
       const users = await tx.$queryRaw<
         Array<{ id: string; cashBalance: bigint; stakedBalance: bigint; version: number }>
       >`SELECT id, "cashBalance", "stakedBalance", version FROM "User" WHERE id = ${params.userId} FOR UPDATE`;
@@ -245,7 +245,7 @@ async function _executeTransaction(params: {
   requireSufficientCash?: boolean;
 }) {
   return prisma.$transaction(
-    async (tx) => {
+    async (tx: any) => {
       const users = await tx.$queryRaw<
         Array<{ id: string; cashBalance: bigint; version: number }>
       >`SELECT id, "cashBalance", version FROM "User" WHERE id = ${params.userId} FOR UPDATE`;

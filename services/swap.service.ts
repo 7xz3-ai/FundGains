@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { getPrices } from "@/services/price.service";
 import { awardXP, checkAndAwardBadges, XP_REWARDS } from "@/services/gamification.service";
+import { routeSwapFeeToTreasury } from "@/services/treasury.service";
 
 // Mock exchange rates — in production, these come from a DEX aggregator (1inch, LI.FI)
 const SUPPORTED_PAIRS = [
@@ -136,6 +137,10 @@ export async function executeSwap(
       // txHash would be set after the on-chain UserOp confirms
     },
   });
+
+  // Route 0.1% of swap fee to community treasury
+  const swapFeeCents = BigInt(Math.round(quote.fromValueUsd * 100 * 0.003)); // 0.3% fee
+  routeSwapFeeToTreasury(swapFeeCents, swap.id).catch(() => {});
 
   // Award XP and check badges
   const { newXp } = await awardXP(userId, XP_REWARDS.SWAP, "swap_completed");

@@ -232,7 +232,8 @@ export async function executeRebalance(
   toVaultId: string
 ): Promise<{ success: boolean; message: string }> {
   try {
-    await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await prisma.$transaction(async (tx: any) => {
       // Find the position to rebalance
       const position = await tx.stakedAsset.findFirst({
         where: { userId, vaultId: fromVaultId, isActive: true },

@@ -177,16 +177,16 @@ export async function getReferralStats(userId: string) {
     prisma.user.count({ where: { referredById: userId } }),
   ]);
 
-  const totalEarnedCents = earnings.reduce(
-    (sum, e) => sum + Number(e.amountCents),
+  const totalEarnedCents = (earnings as any[]).reduce(
+    (sum: number, e: any) => sum + Number(e.amountCents),
     0
   );
-  const tier1Earned = earnings
-    .filter((e) => e.tier === 1)
-    .reduce((sum, e) => sum + Number(e.amountCents), 0);
-  const tier2Earned = earnings
-    .filter((e) => e.tier === 2)
-    .reduce((sum, e) => sum + Number(e.amountCents), 0);
+  const tier1Earned = (earnings as any[])
+    .filter((e: any) => e.tier === 1)
+    .reduce((sum: number, e: any) => sum + Number(e.amountCents), 0);
+  const tier2Earned = (earnings as any[])
+    .filter((e: any) => e.tier === 2)
+    .reduce((sum: number, e: any) => sum + Number(e.amountCents), 0);
 
   return {
     referralCode: user?.referralCode,
@@ -194,7 +194,7 @@ export async function getReferralStats(userId: string) {
     totalEarnedUsd: totalEarnedCents / 100,
     tier1EarnedUsd: tier1Earned / 100,
     tier2EarnedUsd: tier2Earned / 100,
-    recentEarnings: earnings.slice(0, 10).map((e) => ({
+    recentEarnings: (earnings as any[]).slice(0, 10).map((e: any) => ({
       tier: e.tier,
       amountUsd: Number(e.amountCents) / 100,
       date: e.createdAt,

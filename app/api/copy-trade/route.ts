@@ -3,6 +3,7 @@
 // Uses Prisma.TransactionClient for atomic fee-sharing logic
 
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 
 interface CopyTradeRequest {
@@ -56,7 +57,7 @@ export async function POST(req: NextRequest) {
 
     // Calculate total trader portfolio value
     const traderTotalValue = traderUser.stakedAssets.reduce(
-      (sum, asset) => sum + Number(asset.principalCents),
+      (sum: number, asset: { principalCents: bigint }) => sum + Number(asset.principalCents),
       0
     );
 
@@ -68,7 +69,8 @@ export async function POST(req: NextRequest) {
     }
 
     // Atomic transaction: copy allocations and set up fee sharing
-    const result = await prisma.$transaction(async (tx) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = await prisma.$transaction(async (tx: any) => {
       const copiedAssets = [];
 
       // Mirror each of trader's positions proportionally

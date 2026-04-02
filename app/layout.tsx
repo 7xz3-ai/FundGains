@@ -7,16 +7,17 @@
 import "@rainbow-me/rainbowkit/styles.css";
 import "./globals.css";
 import "./globals-liquid.css";
-import { Inter } from "next/font/google";
+import localFont from "next/font/local";
 import { WagmiProvider } from "wagmi";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RainbowKitProvider, darkTheme } from "@rainbow-me/rainbowkit";
 import { wagmiConfig } from "@/lib/wagmi";
 import { useState } from "react";
 
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
+const geistSans = localFont({
+  src: "./fonts/GeistVF.woff",
+  variable: "--font-geist-sans",
+  weight: "100 900",
 });
 
 export default function RootLayout({
@@ -28,7 +29,7 @@ export default function RootLayout({
 
   return (
     <html lang="en" className="dark">
-      <body className={`${inter.className} bg-[#050508] text-[#F0F0F5] min-h-screen`}>
+      <body className={`${geistSans.variable} font-sans bg-[#050508] text-[#F0F0F5] min-h-screen`}>
         <WagmiProvider config={wagmiConfig}>
           <QueryClientProvider client={queryClient}>
             <RainbowKitProvider
