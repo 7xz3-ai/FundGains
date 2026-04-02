@@ -5,7 +5,6 @@
 
 import { prisma } from "@/lib/prisma";
 import { TransactionType, TransactionStatus } from "@prisma/client";
-import { Decimal } from "@prisma/client/runtime/library";
 
 export class InsufficientFundsError extends Error {
   constructor() {
@@ -33,7 +32,7 @@ interface BaseTransactionParams {
   idempotencyKey: string; // client-generated UUID per logical request
   amountCents: bigint;
   assetSymbol?: string;
-  assetAmount?: Decimal;
+  assetAmount?: string | number;
   priceAtTimeCents?: bigint;
 }
 
@@ -112,7 +111,7 @@ export async function processStake(params: StakeParams) {
           userId: params.userId,
           vaultId: params.vaultId,
           assetSymbol: params.assetSymbol ?? "ETH",
-          amountStaked: params.assetAmount ?? new Decimal(0),
+          amountStaked: params.assetAmount ?? "0",
           apyBps: params.apyBps,
           principalCents: params.amountCents,
         },

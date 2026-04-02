@@ -3,7 +3,6 @@
 // Uses "Convert" terminology (no jargon). Gasless via Account Abstraction.
 
 import { prisma } from "@/lib/prisma";
-import { Decimal } from "@prisma/client/runtime/library";
 import { getPrices } from "@/services/price.service";
 import { awardXP, checkAndAwardBadges, XP_REWARDS } from "@/services/gamification.service";
 
@@ -102,11 +101,11 @@ export async function executeSwap(
       userId,
       fromAsset,
       toAsset,
-      fromAmount: new Decimal(fromAmount.toString()),
-      toAmount: new Decimal(quote.toAmount.toString()),
+      fromAmount: fromAmount.toString(),
+      toAmount: quote.toAmount.toString(),
       fromAmountCents: BigInt(Math.round(quote.fromValueUsd * 100)),
       toAmountCents: BigInt(Math.round(quote.toValueUsd * 100)),
-      exchangeRate: new Decimal(quote.exchangeRate.toString()),
+      exchangeRate: quote.exchangeRate.toString(),
       // txHash would be set after the on-chain UserOp confirms
     },
   });
