@@ -14,13 +14,13 @@ export interface Token {
 
 const DEFAULT_TOKENS: Token[] = [
   { symbol: "ETH", name: "Ethereum", color: "#627EEA" },
+  { symbol: "BTC", name: "Bitcoin", color: "#F7931A" },
   { symbol: "USDC", name: "USD Coin", color: "#2775CA" },
+  { symbol: "USDT", name: "Tether", color: "#26A17B" },
   { symbol: "SOL", name: "Solana", color: "#9945FF" },
-  { symbol: "WBTC", name: "Wrapped Bitcoin", color: "#F7931A" },
-  { symbol: "DAI", name: "Dai Stablecoin", color: "#F5AC37" },
-  { symbol: "USDT", name: "Tether USD", color: "#26A17B" },
+  { symbol: "TRX", name: "TRON", color: "#FF0013" },
   { symbol: "LINK", name: "Chainlink", color: "#2A5ADA" },
-  { symbol: "ARB", name: "Arbitrum", color: "#28A0F0" },
+  { symbol: "AERO", name: "Aerodrome", color: "#0052FF" },
 ];
 
 interface TokenSelectorProps {

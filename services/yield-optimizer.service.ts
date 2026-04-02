@@ -8,11 +8,27 @@ import { AlertType } from "@prisma/client";
 
 // Vault registry — in production, this comes from on-chain / API
 const VAULT_REGISTRY = [
+  // ETH Vaults
   { vaultId: "0xVaultETH", asset: "ETH", apyBps: 480, name: "ETH Liquid Vault" },
   { vaultId: "0xVaultETH_B", asset: "ETH", apyBps: 720, name: "ETH Growth Vault" },
+  { vaultId: "vault-base-eth", asset: "ETH", apyBps: 420, name: "Base ETH Yield" },
+  // USDC Vaults
   { vaultId: "0xVaultUSDC", asset: "USDC", apyBps: 850, name: "USDC Stable Vault" },
   { vaultId: "0xVaultUSDC_B", asset: "USDC", apyBps: 1100, name: "USDC High-Yield Vault" },
+  { vaultId: "vault-usdc-stable", asset: "USDC", apyBps: 850, name: "USDC Stable-Vault" },
+  // BTC Vaults
   { vaultId: "0xVaultBTC", asset: "cbBTC", apyBps: 320, name: "cbBTC Growth Vault" },
+  { vaultId: "vault-cbbtc-prime", asset: "cbBTC", apyBps: 680, name: "cbBTC Prime Yield" },
+  // USDT Vaults
+  { vaultId: "vault-usdt-stability", asset: "USDT", apyBps: 1150, name: "USDT Stability Pool" },
+  // TRX Vaults
+  { vaultId: "vault-trx-efficiency", asset: "TRX", apyBps: 520, name: "TRX High-Efficiency Stake" },
+  // SOL Vaults
+  { vaultId: "vault-sol-liquid", asset: "SOL", apyBps: 710, name: "Solana Liquid Stake" },
+  // LINK Vaults
+  { vaultId: "vault-link-oracle", asset: "LINK", apyBps: 390, name: "LINK Oracle Staking" },
+  // AERO Vaults
+  { vaultId: "vault-aero-base", asset: "AERO", apyBps: 1800, name: "AERO Base Ecosystem" },
 ];
 
 // Minimum APY improvement (in bps) to trigger an alert — avoids noise

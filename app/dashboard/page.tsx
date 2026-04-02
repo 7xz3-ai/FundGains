@@ -1,8 +1,9 @@
 "use client";
 
 // app/dashboard/page.tsx
-// Main dashboard: real-time blockchain balance, live prices, vault opportunities,
-// dynamic gains projection, Add Funds, Recent Activity, Gamification widgets.
+// Main dashboard: real-time blockchain balance, AI Autopilot, live prices for 8 assets,
+// global vault opportunities, dynamic gains projection, Add Funds, Recent Activity,
+// Gamification widgets. Chain abstraction — no network logos, users only see assets.
 // Premium fintech design with Trust Blue accent.
 
 import { useAccount, useBalance } from "wagmi";
@@ -17,6 +18,7 @@ import {
 import {
   fetchMarketPrices,
   getEthPrice,
+  ASSET_REGISTRY,
   type MarketPrice,
 } from "@/services/market.service";
 import NotificationCenter from "@/components/notification-center";
@@ -25,6 +27,7 @@ import SmartYieldAlert from "@/components/dashboard/SmartYieldAlert";
 import LevelXPBar from "@/components/dashboard/LevelXPBar";
 import AddFundsModal from "@/components/dashboard/AddFundsModal";
 import RecentActivity from "@/components/dashboard/RecentActivity";
+import AutopilotToggle from "@/components/dashboard/AutopilotToggle";
 import YieldLottery from "@/components/games/YieldLottery";
 import PredictionWidget from "@/components/games/PredictionWidget";
 
@@ -48,9 +51,40 @@ interface UserData {
   }>;
 }
 
-// ─── Static Vault Opportunities ───
+// ─── Global Vault Opportunities (Phase 5) ───
+// No chain logos — users only see assets. Includes new BTC, USDT, TRX vaults.
 
 const VAULT_OPPORTUNITIES = [
+  {
+    id: "vault-cbbtc-prime",
+    name: "cbBTC Prime Yield",
+    asset: "BTC",
+    apyBps: 680,
+    apyLabel: "6.80%",
+    tvlUsd: 28_000_000,
+    risk: "Very Safe",
+    color: "#F7931A",
+  },
+  {
+    id: "vault-usdt-stability",
+    name: "USDT Stability Pool",
+    asset: "USDT",
+    apyBps: 1150,
+    apyLabel: "11.50%",
+    tvlUsd: 56_000_000,
+    risk: "Very Safe",
+    color: "#26A17B",
+  },
+  {
+    id: "vault-trx-efficiency",
+    name: "TRX High-Efficiency Stake",
+    asset: "TRX",
+    apyBps: 520,
+    apyLabel: "5.20%",
+    tvlUsd: 9_500_000,
+    risk: "Low Risk",
+    color: "#FF0013",
+  },
   {
     id: "vault-base-eth",
     name: "Base ETH Yield",
@@ -111,7 +145,7 @@ export default function DashboardPage() {
     if (!isConnected) router.push("/");
   }, [isConnected, router]);
 
-  // Fetch user data + live prices
+  // Fetch user data + live prices (all 8 assets)
   useEffect(() => {
     if (!isConnected || !address) return;
 
@@ -187,6 +221,16 @@ export default function DashboardPage() {
           ? "ethereum"
           : a.assetSymbol === "USDC"
           ? "usd-coin"
+          : a.assetSymbol === "USDT"
+          ? "tether"
+          : a.assetSymbol === "BTC" || a.assetSymbol === "cbBTC"
+          ? "bitcoin"
+          : a.assetSymbol === "TRX"
+          ? "tron"
+          : a.assetSymbol === "LINK"
+          ? "chainlink"
+          : a.assetSymbol === "AERO"
+          ? "aerodrome-finance"
           : a.assetSymbol.toLowerCase();
       const price = prices.find((p) => p.coinId === coinId);
       const priceCents = price
@@ -224,11 +268,11 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-mesh">
       {/* ─── Navigation ─── */}
       <nav className="bg-base/80 backdrop-blur-xl border-b border-white/[0.04] sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <span className="font-bold text-lg tracking-tight">
             <span className="gradient-text">ApexYield</span>
           </span>
-          <div className="flex items-center gap-3 sm:gap-5">
+          <div className="flex items-center gap-2 sm:gap-5">
             <button
               onClick={() => router.push("/convert")}
               className="text-[13px] text-text-muted hover:text-text-primary transition-colors hidden sm:block"
@@ -266,7 +310,7 @@ export default function DashboardPage() {
             />
             <button
               onClick={() => router.push("/profile")}
-              className="text-[13px] text-text-secondary hover:text-text-primary transition-colors"
+              className="text-[13px] text-text-secondary hover:text-text-primary transition-colors hidden sm:block"
             >
               {userData?.displayName ?? "..."}
             </button>
@@ -275,18 +319,24 @@ export default function DashboardPage() {
         </div>
       </nav>
 
-      <main className="max-w-6xl mx-auto px-6 py-8 space-y-6">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-5">
+        {/* ─── AI Autopilot ─── */}
+        <AutopilotToggle
+          walletAddress={address ?? ""}
+          isConnected={isConnected}
+        />
+
         {/* ─── Smart Yield Alert ─── */}
         <SmartYieldAlert walletAddress={address ?? ""} />
 
         {/* ─── Quick Actions ─── */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 sm:gap-3">
           {[
             {
               label: "Stake",
               href: "/dashboard/vaults",
               icon: (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-[#34D399]">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-[#34D399]">
                   <polyline points="22,7 13.5,15.5 8.5,10.5 2,17" />
                   <polyline points="16,7 22,7 22,13" />
                 </svg>
@@ -296,7 +346,7 @@ export default function DashboardPage() {
               label: "Convert",
               href: "/convert",
               icon: (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-[#2D9FFF]">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-[#2D9FFF]">
                   <polyline points="17,1 21,5 17,9" />
                   <path d="M3 11V9a4 4 0 0 1 4-4h14" />
                   <polyline points="7,23 3,19 7,15" />
@@ -308,16 +358,27 @@ export default function DashboardPage() {
               label: "Liquidity",
               href: "/liquidity",
               icon: (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-[#C084FC]">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-[#C084FC]">
                   <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
                 </svg>
               ),
             },
             {
-              label: "Refer & Earn",
+              label: "Deposit",
+              href: "#",
+              onClick: () => setShowDeposit(true),
+              icon: (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-[#F59E0B]">
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+              ),
+            },
+            {
+              label: "Refer",
               href: "/dashboard/referral",
               icon: (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-[#818CF8]">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-[#818CF8]">
                   <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
                   <circle cx="9" cy="7" r="4" />
                   <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
@@ -329,7 +390,7 @@ export default function DashboardPage() {
               label: "Profile",
               href: "/profile",
               icon: (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-[#F59E0B]">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-[#EC4899]">
                   <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                   <circle cx="12" cy="7" r="4" />
                 </svg>
@@ -338,11 +399,15 @@ export default function DashboardPage() {
           ].map((action) => (
             <button
               key={action.label}
-              onClick={() => router.push(action.href)}
-              className="card p-5 flex flex-col items-center gap-2.5 hover:border-accent/20"
+              onClick={() =>
+                "onClick" in action && action.onClick
+                  ? action.onClick()
+                  : router.push(action.href)
+              }
+              className="card p-4 flex flex-col items-center gap-2 hover:border-accent/20"
             >
               {action.icon}
-              <span className="text-[13px] font-medium text-text-primary">
+              <span className="text-[12px] font-medium text-text-primary">
                 {action.label}
               </span>
             </button>
@@ -352,7 +417,7 @@ export default function DashboardPage() {
         {/* ─── Balance Overview ─── */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Cash Balance — Real on-chain ETH */}
-          <div className="card p-8">
+          <div className="card p-6 sm:p-8">
             <div className="flex items-center justify-between mb-2">
               <p className="text-[13px] text-text-muted">Cash Balance</p>
               <button
@@ -392,18 +457,18 @@ export default function DashboardPage() {
           </div>
 
           {/* Staked Balance */}
-          <div className="card p-8 border-accent/10">
+          <div className="card p-6 sm:p-8 border-accent/10">
             <p className="text-[13px] text-text-muted mb-2">Staked Balance</p>
             <p className="text-3xl font-bold gradient-text-green tracking-tight">
               ${userData?.stakedBalanceUsd.toFixed(2) ?? "0.00"}
             </p>
-            <p className="text-[13px] text-text-dim mt-1">Earning yield now</p>
+            <p className="text-[13px] text-text-dim mt-1">Earning yield across global vaults</p>
           </div>
         </div>
 
         {/* ─── Gains Projection (Dynamic) ─── */}
-        <div className="card p-8">
-          <div className="flex items-center justify-between mb-6">
+        <div className="card p-6 sm:p-8">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-3">
             <div>
               <h2 className="text-lg font-semibold text-text-primary">
                 Gains Projection
@@ -455,7 +520,7 @@ export default function DashboardPage() {
           ) : (
             <div className="py-8 text-center">
               <p className="text-text-muted text-[14px]">
-                Deposit ETH to see your yield projections.
+                Deposit assets to see your yield projections.
               </p>
               <button
                 onClick={() => setShowDeposit(true)}
@@ -474,90 +539,93 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* ─── Live Prices ─── */}
-        <div className="card p-8">
+        {/* ─── Live Prices (All 8 Global Assets) ─── */}
+        <div className="card p-6 sm:p-8">
           <div className="flex items-center justify-between mb-5">
             <h2 className="text-lg font-semibold text-text-primary">
               Live Prices
             </h2>
             <span className="text-[12px] text-text-dim">
-              Auto-refreshes every 30s
+              {prices.length} assets · Auto-refreshes
             </span>
           </div>
-          <div className="space-y-1">
-            {prices.map((p) => (
-              <div
-                key={p.coinId}
-                className="flex items-center justify-between py-3.5 border-b border-white/[0.04] last:border-0"
-              >
-                <div className="flex items-center gap-3">
+          {/* Horizontal scrolling ticker on mobile */}
+          <div className="overflow-x-auto -mx-2 px-2 pb-1">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 min-w-[600px] sm:min-w-0">
+              {prices.map((p) => {
+                const meta = ASSET_REGISTRY.find((a) => a.coinId === p.coinId);
+                const color = meta?.color ?? "#6B7280";
+                return (
                   <div
-                    className="w-8 h-8 rounded-xl flex items-center justify-center text-[12px] font-bold text-white"
-                    style={{
-                      backgroundColor:
-                        p.coinId === "ethereum"
-                          ? "#627EEA"
-                          : p.coinId === "usd-coin"
-                          ? "#2775CA"
-                          : p.coinId === "solana"
-                          ? "#9945FF"
-                          : "#6B7280",
-                    }}
+                    key={p.coinId}
+                    className="rounded-2xl bg-white/[0.02] border border-white/[0.04] p-4 hover:border-white/[0.08] transition-colors"
                   >
-                    {p.symbol.slice(0, 1)}
+                    <div className="flex items-center gap-2.5 mb-3">
+                      <div
+                        className="w-8 h-8 rounded-xl flex items-center justify-center text-[11px] font-bold text-white"
+                        style={{ backgroundColor: color }}
+                      >
+                        {p.symbol.slice(0, 1)}
+                      </div>
+                      <div>
+                        <span className="text-[13px] font-semibold text-text-primary">
+                          {p.symbol}
+                        </span>
+                        <span className="text-[11px] text-text-dim ml-1.5 hidden sm:inline">
+                          {p.name}
+                        </span>
+                      </div>
+                    </div>
+                    <p className="text-[16px] font-bold text-text-primary">
+                      $
+                      {p.priceUsd >= 100
+                        ? p.priceUsd.toLocaleString("en-US", {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 0,
+                          })
+                        : p.priceUsd >= 1
+                        ? p.priceUsd.toLocaleString("en-US", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })
+                        : p.priceUsd.toFixed(4)}
+                    </p>
+                    {p.change24hPct != null && (
+                      <span
+                        className={`text-[12px] font-semibold ${
+                          p.change24hPct >= 0
+                            ? "text-[#34D399]"
+                            : "text-[#EF4444]"
+                        }`}
+                      >
+                        {p.change24hPct >= 0 ? "+" : ""}
+                        {p.change24hPct.toFixed(2)}%
+                      </span>
+                    )}
+                    {p.isStale && (
+                      <span className="text-[10px] text-[#F59E0B] ml-1">(stale)</span>
+                    )}
                   </div>
-                  <div>
-                    <span className="text-[14px] font-semibold text-text-primary">
-                      {p.symbol}
-                    </span>
-                    <span className="text-[12px] text-text-dim ml-2">
-                      {p.name}
-                    </span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  {p.change24hPct != null && (
-                    <span
-                      className={`text-[13px] font-semibold px-2.5 py-1 rounded-lg ${
-                        p.change24hPct >= 0
-                          ? "text-[#34D399] bg-[#34D399]/10"
-                          : "text-[#EF4444] bg-[#EF4444]/10"
-                      }`}
-                    >
-                      {p.change24hPct >= 0 ? "+" : ""}
-                      {p.change24hPct.toFixed(2)}%
-                    </span>
-                  )}
-                  <span className="text-[15px] font-semibold text-text-primary min-w-[90px] text-right">
-                    $
-                    {p.priceUsd.toLocaleString("en-US", {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
-                  </span>
-                  {p.isStale && (
-                    <span className="text-[11px] text-[#F59E0B]">(stale)</span>
-                  )}
-                </div>
-              </div>
-            ))}
-            {prices.length === 0 && (
-              <div className="py-6 text-center">
-                <p className="text-text-dim text-[13px]">Loading prices...</p>
-              </div>
-            )}
+                );
+              })}
+            </div>
           </div>
+          {prices.length === 0 && (
+            <div className="py-6 text-center">
+              <p className="text-text-dim text-[13px]">Loading prices...</p>
+            </div>
+          )}
         </div>
 
-        {/* ─── Vault Opportunities ─── */}
-        <div className="card p-8">
+        {/* ─── Vault Opportunities (Global — No Chain Logos) ─── */}
+        <div className="card p-6 sm:p-8">
           <div className="flex items-center justify-between mb-5">
             <div>
               <h2 className="text-lg font-semibold text-text-primary">
-                Vault Opportunities
+                Global Vault Opportunities
               </h2>
               <p className="text-[13px] text-text-muted mt-0.5">
-                Non-custodial yield vaults on Base
+                Non-custodial yield across all assets
               </p>
             </div>
             <button
@@ -567,11 +635,11 @@ export default function DashboardPage() {
               View All
             </button>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {VAULT_OPPORTUNITIES.map((vault) => (
               <div
                 key={vault.id}
-                className="rounded-2xl bg-white/[0.02] border border-white/[0.04] p-6 hover:border-white/[0.08] transition-colors"
+                className="rounded-2xl bg-white/[0.02] border border-white/[0.04] p-5 hover:border-white/[0.08] transition-colors"
               >
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2.5">
@@ -582,25 +650,25 @@ export default function DashboardPage() {
                       {vault.asset.slice(0, 1)}
                     </div>
                     <div>
-                      <p className="text-[14px] font-semibold text-text-primary">
+                      <p className="text-[13px] font-semibold text-text-primary">
                         {vault.name}
                       </p>
-                      <p className="text-[12px] text-text-dim">{vault.asset}</p>
+                      <p className="text-[11px] text-text-dim">{vault.asset}</p>
                     </div>
                   </div>
                   <VaultRiskBadge vaultId={vault.id} compact />
                 </div>
 
-                <div className="flex items-end justify-between mb-5">
+                <div className="flex items-end justify-between mb-4">
                   <div>
-                    <p className="text-[12px] text-text-dim mb-0.5">APY</p>
-                    <p className="text-2xl font-bold gradient-text-green">
+                    <p className="text-[11px] text-text-dim mb-0.5">APY</p>
+                    <p className="text-xl font-bold gradient-text-green">
                       {vault.apyLabel}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-[12px] text-text-dim mb-0.5">TVL</p>
-                    <p className="text-[15px] font-semibold text-text-primary">
+                    <p className="text-[11px] text-text-dim mb-0.5">TVL</p>
+                    <p className="text-[14px] font-semibold text-text-primary">
                       ${(vault.tvlUsd / 1_000_000).toFixed(1)}M
                     </p>
                   </div>
@@ -608,7 +676,7 @@ export default function DashboardPage() {
 
                 <button
                   onClick={() => router.push("/dashboard/vaults")}
-                  className="w-full py-2.5 rounded-xl btn-primary text-[13px]"
+                  className="w-full py-2.5 rounded-xl btn-primary text-[12px]"
                 >
                   Stake {vault.asset}
                 </button>
@@ -628,7 +696,7 @@ export default function DashboardPage() {
 
         {/* ─── Active Positions ─── */}
         {userData?.stakedAssets && userData.stakedAssets.length > 0 && (
-          <div className="card p-8">
+          <div className="card p-6 sm:p-8">
             <h2 className="text-lg font-semibold text-text-primary mb-5">
               Active Positions
             </h2>
@@ -662,6 +730,24 @@ export default function DashboardPage() {
             </div>
           </div>
         )}
+
+        {/* ─── Mobile Nav (visible on small screens) ─── */}
+        <div className="sm:hidden grid grid-cols-4 gap-2 pb-4">
+          {[
+            { label: "Convert", href: "/convert" },
+            { label: "Liquidity", href: "/liquidity" },
+            { label: "Referrals", href: "/dashboard/referral" },
+            { label: "Profile", href: "/profile" },
+          ].map((item) => (
+            <button
+              key={item.label}
+              onClick={() => router.push(item.href)}
+              className="py-3 rounded-2xl bg-white/[0.03] border border-white/[0.06] text-[11px] font-medium text-text-muted hover:text-text-primary transition-colors"
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
       </main>
 
       {/* ─── Modals & Drawers ─── */}

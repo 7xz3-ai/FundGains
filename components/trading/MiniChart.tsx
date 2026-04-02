@@ -84,8 +84,8 @@ export default function MiniChart({ pair, visible }: MiniChartProps) {
         },
       });
 
-      const { AreaSeries } = await import("lightweight-charts");
-      const series = chart.addSeries(AreaSeries, {
+      const lc = await import("lightweight-charts");
+      const series = chart.addSeries(lc.AreaSeries, {
         lineColor: "#2D9FFF",
         topColor: "rgba(45,159,255,0.2)",
         bottomColor: "rgba(45,159,255,0.0)",

@@ -8,12 +8,38 @@ import { awardXP, checkAndAwardBadges, XP_REWARDS } from "@/services/gamificatio
 
 // Mock exchange rates — in production, these come from a DEX aggregator (1inch, LI.FI)
 const SUPPORTED_PAIRS = [
+  // ETH pairs
   { from: "ETH", to: "USDC", coinIdFrom: "ethereum", coinIdTo: "usd-coin" },
   { from: "USDC", to: "ETH", coinIdFrom: "usd-coin", coinIdTo: "ethereum" },
   { from: "ETH", to: "cbBTC", coinIdFrom: "ethereum", coinIdTo: "bitcoin" },
   { from: "cbBTC", to: "ETH", coinIdFrom: "bitcoin", coinIdTo: "ethereum" },
   { from: "USDC", to: "cbBTC", coinIdFrom: "usd-coin", coinIdTo: "bitcoin" },
   { from: "cbBTC", to: "USDC", coinIdFrom: "bitcoin", coinIdTo: "usd-coin" },
+  // USDT pairs
+  { from: "USDT", to: "USDC", coinIdFrom: "tether", coinIdTo: "usd-coin" },
+  { from: "USDC", to: "USDT", coinIdFrom: "usd-coin", coinIdTo: "tether" },
+  { from: "ETH", to: "USDT", coinIdFrom: "ethereum", coinIdTo: "tether" },
+  { from: "USDT", to: "ETH", coinIdFrom: "tether", coinIdTo: "ethereum" },
+  // SOL pairs
+  { from: "ETH", to: "SOL", coinIdFrom: "ethereum", coinIdTo: "solana" },
+  { from: "SOL", to: "ETH", coinIdFrom: "solana", coinIdTo: "ethereum" },
+  { from: "USDC", to: "SOL", coinIdFrom: "usd-coin", coinIdTo: "solana" },
+  { from: "SOL", to: "USDC", coinIdFrom: "solana", coinIdTo: "usd-coin" },
+  // TRX pairs
+  { from: "ETH", to: "TRX", coinIdFrom: "ethereum", coinIdTo: "tron" },
+  { from: "TRX", to: "ETH", coinIdFrom: "tron", coinIdTo: "ethereum" },
+  { from: "USDC", to: "TRX", coinIdFrom: "usd-coin", coinIdTo: "tron" },
+  { from: "TRX", to: "USDC", coinIdFrom: "tron", coinIdTo: "usd-coin" },
+  // LINK pairs
+  { from: "ETH", to: "LINK", coinIdFrom: "ethereum", coinIdTo: "chainlink" },
+  { from: "LINK", to: "ETH", coinIdFrom: "chainlink", coinIdTo: "ethereum" },
+  { from: "USDC", to: "LINK", coinIdFrom: "usd-coin", coinIdTo: "chainlink" },
+  { from: "LINK", to: "USDC", coinIdFrom: "chainlink", coinIdTo: "usd-coin" },
+  // AERO pairs
+  { from: "ETH", to: "AERO", coinIdFrom: "ethereum", coinIdTo: "aerodrome-finance" },
+  { from: "AERO", to: "ETH", coinIdFrom: "aerodrome-finance", coinIdTo: "ethereum" },
+  { from: "USDC", to: "AERO", coinIdFrom: "usd-coin", coinIdTo: "aerodrome-finance" },
+  { from: "AERO", to: "USDC", coinIdFrom: "aerodrome-finance", coinIdTo: "usd-coin" },
 ];
 
 interface SwapQuote {
