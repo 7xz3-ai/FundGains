@@ -1,8 +1,9 @@
 "use client";
 
-// app/dashboard/convert/page.tsx
-// Redirects to the new /convert page or serves as the dashboard-embedded convert.
-// Premium minimalist design, jargon-free.
+// app/convert/page.tsx
+// Simple Swap Engine — minimalist, jargon-free token conversion.
+// Uses "Estimated Exchange Rate" instead of "Slippage."
+// Massive, clean input fields. Premium fintech feel.
 
 import { useAccount } from "wagmi";
 import { useRouter } from "next/navigation";
@@ -10,9 +11,9 @@ import { useEffect, useState } from "react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 const ASSETS = [
-  { symbol: "USDC", name: "USD Coin" },
-  { symbol: "ETH", name: "Ethereum" },
-  { symbol: "SOL", name: "Solana" },
+  { symbol: "USDC", name: "USD Coin", color: "#2775CA" },
+  { symbol: "ETH", name: "Ethereum", color: "#627EEA" },
+  { symbol: "SOL", name: "Solana", color: "#9945FF" },
 ];
 
 interface Quote {
@@ -27,7 +28,7 @@ interface Quote {
   fee: string;
 }
 
-export default function ConvertPage() {
+export default function SimpleSwapPage() {
   const { address, isConnected } = useAccount();
   const router = useRouter();
 
@@ -39,6 +40,7 @@ export default function ConvertPage() {
   const [executing, setExecuting] = useState(false);
   const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
 
+  // Fetch quote on input change
   useEffect(() => {
     if (!fromAmount || parseFloat(fromAmount) <= 0) {
       setQuote(null);
@@ -79,7 +81,7 @@ export default function ConvertPage() {
       if (res.ok) {
         setResult({
           success: true,
-          message: `Converted ${data.fromAmount} ${data.fromAsset} to ${data.toAmount.toFixed(6)} ${data.toAsset}`,
+          message: `Successfully converted ${data.fromAmount} ${data.fromAsset} to ${data.toAmount.toFixed(6)} ${data.toAsset}`,
         });
         setFromAmount("");
         setQuote(null);
@@ -87,7 +89,7 @@ export default function ConvertPage() {
         setResult({ success: false, message: data.error ?? "Conversion failed" });
       }
     } catch {
-      setResult({ success: false, message: "Network error" });
+      setResult({ success: false, message: "Network error. Please try again." });
     }
     setExecuting(false);
   }
@@ -107,8 +109,12 @@ export default function ConvertPage() {
 
   if (!isConnected) return null;
 
+  const fromMeta = ASSETS.find((a) => a.symbol === fromAsset);
+  const toMeta = ASSETS.find((a) => a.symbol === toAsset);
+
   return (
     <div className="min-h-screen bg-mesh">
+      {/* Navigation */}
       <nav className="bg-base/80 backdrop-blur-xl border-b border-white/[0.04] sticky top-0 z-50">
         <div className="max-w-lg mx-auto px-6 h-16 flex items-center justify-between">
           <button
@@ -120,32 +126,32 @@ export default function ConvertPage() {
             </svg>
             Dashboard
           </button>
-          <span className="font-semibold gradient-text text-[15px]">Convert</span>
           <ConnectButton showBalance={false} accountStatus="avatar" />
         </div>
       </nav>
 
-      <main className="max-w-lg mx-auto px-6 py-10">
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-text-primary tracking-tight mb-2">
-            Convert Assets
+      <main className="max-w-lg mx-auto px-6 py-12">
+        {/* Header */}
+        <div className="text-center mb-10">
+          <h1 className="text-3xl font-bold text-text-primary tracking-tight mb-2">
+            Convert
           </h1>
-          <p className="text-[14px] text-text-muted">
+          <p className="text-[15px] text-text-muted">
             Instantly convert between tokens. No gas fees.
           </p>
         </div>
 
         <div className="card p-8 space-y-6">
-          {/* From */}
+          {/* From Section */}
           <div>
-            <label className="text-[13px] text-text-muted font-medium mb-3 block">
-              You pay
-            </label>
+            <div className="flex items-center justify-between mb-3">
+              <label className="text-[13px] text-text-muted font-medium">You pay</label>
+            </div>
             <div className="flex items-center gap-4 p-4 rounded-2xl bg-white/[0.02] border border-white/[0.04] focus-within:border-accent/30 transition-colors">
               <select
                 value={fromAsset}
                 onChange={(e) => setFromAsset(e.target.value)}
-                className="bg-transparent text-text-primary font-semibold text-[15px] focus:outline-none cursor-pointer appearance-none"
+                className="bg-transparent text-text-primary font-semibold text-[15px] focus:outline-none cursor-pointer appearance-none pr-1"
               >
                 {ASSETS.filter((a) => a.symbol !== toAsset).map((a) => (
                   <option key={a.symbol} value={a.symbol} className="bg-[#0d0d14]">
@@ -161,9 +167,12 @@ export default function ConvertPage() {
                 className="flex-1 bg-transparent text-right text-2xl font-semibold text-text-primary placeholder-text-dim focus:outline-none"
               />
             </div>
+            {fromMeta && (
+              <p className="text-[12px] text-text-dim mt-2 ml-1">{fromMeta.name}</p>
+            )}
           </div>
 
-          {/* Flip */}
+          {/* Flip Button */}
           <div className="flex justify-center -my-1">
             <button
               onClick={handleFlip}
@@ -178,16 +187,16 @@ export default function ConvertPage() {
             </button>
           </div>
 
-          {/* To */}
+          {/* To Section */}
           <div>
-            <label className="text-[13px] text-text-muted font-medium mb-3 block">
-              You receive
-            </label>
+            <div className="flex items-center justify-between mb-3">
+              <label className="text-[13px] text-text-muted font-medium">You receive</label>
+            </div>
             <div className="flex items-center gap-4 p-4 rounded-2xl bg-white/[0.02] border border-white/[0.04]">
               <select
                 value={toAsset}
                 onChange={(e) => setToAsset(e.target.value)}
-                className="bg-transparent text-text-primary font-semibold text-[15px] focus:outline-none cursor-pointer appearance-none"
+                className="bg-transparent text-text-primary font-semibold text-[15px] focus:outline-none cursor-pointer appearance-none pr-1"
               >
                 {ASSETS.filter((a) => a.symbol !== fromAsset).map((a) => (
                   <option key={a.symbol} value={a.symbol} className="bg-[#0d0d14]">
@@ -207,33 +216,29 @@ export default function ConvertPage() {
                 </span>
               </div>
             </div>
+            {toMeta && (
+              <p className="text-[12px] text-text-dim mt-2 ml-1">{toMeta.name}</p>
+            )}
           </div>
 
           {/* Quote Details */}
           {quote && (
             <div className="rounded-2xl bg-white/[0.02] border border-white/[0.04] p-4 space-y-2.5">
-              <div className="flex justify-between text-[13px]">
-                <span className="text-text-muted">Estimated Exchange Rate</span>
-                <span className="text-text-primary font-medium">
-                  1 {fromAsset} = {quote.exchangeRate.toFixed(6)} {toAsset}
-                </span>
-              </div>
-              <div className="flex justify-between text-[13px]">
-                <span className="text-text-muted">You Pay</span>
-                <span className="text-text-primary font-medium">${quote.fromValueUsd.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-[13px]">
-                <span className="text-text-muted">You Receive</span>
-                <span className="text-[#34D399] font-medium">${quote.toValueUsd.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-[13px]">
-                <span className="text-text-muted">Platform Fee</span>
-                <span className="text-text-primary font-medium">{quote.fee}</span>
-              </div>
-              <div className="flex justify-between text-[13px]">
-                <span className="text-text-muted">Network Fee</span>
-                <span className="text-[#34D399] font-medium">$0.00 (Sponsored)</span>
-              </div>
+              <QuoteRow
+                label="Estimated Exchange Rate"
+                value={`1 ${fromAsset} = ${quote.exchangeRate.toFixed(6)} ${toAsset}`}
+              />
+              <QuoteRow
+                label="You Pay (USD)"
+                value={`$${quote.fromValueUsd.toFixed(2)}`}
+              />
+              <QuoteRow
+                label="You Receive (USD)"
+                value={`$${quote.toValueUsd.toFixed(2)}`}
+                accent
+              />
+              <QuoteRow label="Platform Fee" value={quote.fee} />
+              <QuoteRow label="Network Fee" value="$0.00 (Sponsored)" accent />
             </div>
           )}
 
@@ -273,6 +278,29 @@ export default function ConvertPage() {
           )}
         </div>
       </main>
+    </div>
+  );
+}
+
+function QuoteRow({
+  label,
+  value,
+  accent,
+}: {
+  label: string;
+  value: string;
+  accent?: boolean;
+}) {
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-[13px] text-text-muted">{label}</span>
+      <span
+        className={`text-[13px] font-medium ${
+          accent ? "text-[#34D399]" : "text-text-primary"
+        }`}
+      >
+        {value}
+      </span>
     </div>
   );
 }

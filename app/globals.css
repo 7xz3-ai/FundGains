@@ -2,74 +2,201 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Cyber-Noir dark theme variables */
+/* ─── Design Tokens ─── */
 :root {
-  --background: #050508;
-  --surface: #0d0d14;
-  --surface-2: #12121c;
-  --border: #1a1a2e;
-  --accent: #00ff88;
-  --accent-dim: #00cc6a;
-  --accent-glow: rgba(0, 255, 136, 0.15);
-  --muted: #4a4a6a;
-  --text: #e2e2f0;
-  --text-dim: #8080a0;
-  --danger: #ff4466;
-  --warning: #ffaa00;
+  --bg-base: #050508;
+  --bg-surface: rgba(255, 255, 255, 0.03);
+  --bg-surface-hover: rgba(255, 255, 255, 0.06);
+  --bg-elevated: rgba(255, 255, 255, 0.05);
+  --bg-glass: rgba(13, 13, 20, 0.60);
+
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-hover: rgba(255, 255, 255, 0.12);
+
+  --accent: #2D9FFF;       /* Trust Blue */
+  --accent-soft: rgba(45, 159, 255, 0.12);
+  --accent-glow: rgba(45, 159, 255, 0.08);
+  --accent-green: #34D399;
+  --accent-green-soft: rgba(52, 211, 153, 0.12);
+
+  --text-primary: #F0F0F5;
+  --text-secondary: #9CA3AF;
+  --text-muted: #6B7280;
+  --text-dim: #4B5563;
+
+  --danger: #EF4444;
+  --warning: #F59E0B;
+  --success: #34D399;
 }
 
 body {
-  background: var(--background);
-  color: var(--text);
-  font-family: 'Inter', system-ui, sans-serif;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Glowing accent borders */
-.glow-border {
-  border: 1px solid var(--accent);
-  box-shadow: 0 0 20px var(--accent-glow), inset 0 0 20px var(--accent-glow);
-}
-
-/* Subtle grid background */
-.cyber-grid {
-  background-image:
-    linear-gradient(rgba(0, 255, 136, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 255, 136, 0.03) 1px, transparent 1px);
-  background-size: 40px 40px;
-}
-
-/* Animated gradient text */
+/* ─── Gradient Text ─── */
 .gradient-text {
-  background: linear-gradient(135deg, #00ff88 0%, #00aaff 50%, #aa00ff 100%);
+  background: linear-gradient(135deg, #2D9FFF 0%, #818CF8 50%, #C084FC 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-/* Scanline overlay for CRT effect */
-.scanlines::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 2px,
-    rgba(0, 0, 0, 0.03) 2px,
-    rgba(0, 0, 0, 0.03) 4px
-  );
-  pointer-events: none;
+.gradient-text-green {
+  background: linear-gradient(135deg, #34D399 0%, #2D9FFF 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
-/* Card surface */
+/* ─── Glass Card ─── */
 .card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
+  background: var(--bg-glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-subtle);
+  border-radius: 20px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .card:hover {
-  border-color: var(--accent);
-  box-shadow: 0 0 30px var(--accent-glow);
+  border-color: var(--border-hover);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2), 0 0 0 1px var(--border-hover);
+}
+
+.card-sm {
+  background: var(--bg-glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ─── Subtle Background ─── */
+.bg-mesh {
+  background-image:
+    radial-gradient(at 20% 20%, rgba(45, 159, 255, 0.04) 0px, transparent 50%),
+    radial-gradient(at 80% 80%, rgba(129, 140, 248, 0.03) 0px, transparent 50%);
+}
+
+/* ─── Button Styles ─── */
+.btn-primary {
+  background: var(--accent);
+  color: white;
+  font-weight: 600;
+  border-radius: 14px;
+  padding: 12px 24px;
+  font-size: 14px;
   transition: all 0.2s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  background: #1A8FEF;
+  box-shadow: 0 4px 16px rgba(45, 159, 255, 0.25);
+  transform: translateY(-1px);
+}
+
+.btn-primary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-secondary {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  font-weight: 500;
+  border-radius: 14px;
+  padding: 12px 24px;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  border: 1px solid var(--border-subtle);
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  background: var(--bg-surface-hover);
+  border-color: var(--border-hover);
+}
+
+/* ─── Input Styles ─── */
+.input-field {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  padding: 14px 18px;
+  color: var(--text-primary);
+  font-size: 16px;
+  transition: all 0.2s ease;
+  outline: none;
+  width: 100%;
+}
+
+.input-field:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.input-field::placeholder {
+  color: var(--text-dim);
+}
+
+/* ─── Scrollbar ─── */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* ─── Animations ─── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, transparent 25%, rgba(255,255,255,0.04) 50%, transparent 75%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* ─── Legacy compat (keep for pages not yet updated) ─── */
+.cyber-grid {
+  /* removed harsh grid lines */
+}
+
+.glow-border {
+  border: 1px solid var(--accent);
+  box-shadow: 0 0 16px var(--accent-glow);
+}
+
+.scanlines::after {
+  display: none; /* removed CRT effect */
 }
