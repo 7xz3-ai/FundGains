@@ -45,6 +45,12 @@ enum AlertType {
   LEVEL_UP         // User leveled up
 }
 
+enum AssetCategory {
+  CRYPTO
+  RWA
+  STABLE
+}
+
 enum TransactionStatus {
   PENDING
   PROCESSING
@@ -150,6 +156,7 @@ model StakedAsset {
   userId      String
   vaultId     String // on-chain vault contract address (Base)
   assetSymbol String // "ETH", "USDC", etc.
+  category    AssetCategory @default(CRYPTO)
 
   amountStaked Decimal @db.Decimal(28, 18) // token units
   apyBps       Int     // APY in basis points (500 = 5.00%)
@@ -282,6 +289,7 @@ model VaultRiskScore {
   tvlCents       BigInt   // total value locked in cents
   impermanentLossRisk Int @default(0) // 0-10
   smartContractAge    Int @default(0) // days since deployment
+  stabilityGrade      String?         // e.g. "AAA", "A+" for RWA
   lastUpdated    DateTime @default(now())
 
   @@index([riskScore])

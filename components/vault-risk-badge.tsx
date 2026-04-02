@@ -14,6 +14,7 @@ interface VaultRisk {
   tvlUsd: number;
   contractAgeDays: number;
   impermanentLossRisk: number;
+  stabilityGrade?: string;
 }
 
 const SCORE_COLORS: Record<string, string> = {
@@ -69,8 +70,11 @@ export default function VaultRiskBadge({
       .finally(() => setLoading(false));
   }, [vaultId, fetched]);
 
+  const isRwa = risk?.stabilityGrade !== undefined;
   const shieldColor = risk
-    ? SCORE_COLORS[risk.riskLabel] ?? "text-text-muted"
+    ? isRwa 
+      ? "text-[#10B981]" 
+      : (SCORE_COLORS[risk.riskLabel] ?? "text-text-muted")
     : "text-text-muted";
 
   return (
@@ -79,26 +83,48 @@ export default function VaultRiskBadge({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Shield Icon */}
+      {/* Icon (Shield for Crypto, Bank for RWA) */}
       <div
         className={`inline-flex items-center gap-1.5 ${shieldColor} cursor-pointer transition-opacity hover:opacity-80`}
-        title="Security Score"
+        title={isRwa ? "Stability Grade" : "Security Score"}
       >
-        <svg
-          width={compact ? 14 : 16}
-          height={compact ? 14 : 16}
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-        </svg>
+        {isRwa ? (
+          <svg
+            width={compact ? 14 : 16}
+            height={compact ? 14 : 16}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M3 21h18" />
+            <path d="M3 10h18" />
+            <path d="M5 6l7-3 7 3" />
+            <path d="M4 10v11" />
+            <path d="M20 10v11" />
+            <path d="M8 14v3" />
+            <path d="M12 14v3" />
+            <path d="M16 14v3" />
+          </svg>
+        ) : (
+          <svg
+            width={compact ? 14 : 16}
+            height={compact ? 14 : 16}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+          </svg>
+        )}
         {!compact && risk && (
           <span className="text-[12px] font-semibold">
-            {risk.riskScore}/10
+            {isRwa ? risk.stabilityGrade : `${risk.riskScore}/10`}
           </span>
         )}
       </div>
@@ -130,10 +156,17 @@ export default function VaultRiskBadge({
 
           {/* Detail Rows */}
           <div className="space-y-2.5">
+            {risk.stabilityGrade && (
+              <DetailRow
+                label="Stability Grade"
+                value={risk.stabilityGrade}
+                color="text-[#10B981]"
+              />
+            )}
             <DetailRow
               label="Risk Level"
               value={risk.riskLabel}
-              color={SCORE_COLORS[risk.riskLabel]}
+              color={isRwa ? "text-[#10B981]" : SCORE_COLORS[risk.riskLabel]}
             />
             <DetailRow
               label="Audit"
@@ -142,10 +175,14 @@ export default function VaultRiskBadge({
                   ? risk.auditor ?? "Audited"
                   : risk.auditStatus === "partial"
                   ? `Partial (${risk.auditor ?? "In Progress"})`
+                  : risk.auditStatus === "regulated"
+                  ? `Regulated (${risk.auditor ?? "NYDFS"})`
+                  : risk.auditStatus === "verified"
+                  ? `Verified (${risk.auditor ?? "Asset-Backed"})`
                   : "Unaudited"
               }
               color={
-                risk.auditStatus === "audited"
+                risk.auditStatus === "audited" || risk.auditStatus === "regulated" || risk.auditStatus === "verified"
                   ? "text-[#34D399]"
                   : risk.auditStatus === "partial"
                   ? "text-[#F59E0B]"

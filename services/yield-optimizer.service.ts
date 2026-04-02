@@ -29,6 +29,9 @@ const VAULT_REGISTRY = [
   { vaultId: "vault-link-oracle", asset: "LINK", apyBps: 390, name: "LINK Oracle Staking" },
   // AERO Vaults
   { vaultId: "vault-aero-base", asset: "AERO", apyBps: 1800, name: "AERO Base Ecosystem" },
+  { vaultId: "vault-paxg-gold", asset: "PAXG", apyBps: 120, name: "Digital Gold", stabilityGrade: "AAA", category: "Commodities" },
+  { vaultId: "vault-usdy-treasury", asset: "USDY", apyBps: 520, name: "U.S. Treasury Yield", stabilityGrade: "AAA", category: "Stability" },
+  { vaultId: "vault-ref-rental", asset: "REF", apyBps: 740, name: "Rental Income Fund", stabilityGrade: "A+", category: "Commodities" },
 ];
 
 // Minimum APY improvement (in bps) to trigger an alert — avoids noise

@@ -33,6 +33,9 @@ export const ASSET_REGISTRY: AssetMeta[] = [
   { coinId: "tron",       symbol: "TRX",  name: "TRON",          color: "#FF0013", fallbackPrice: 0.24 },
   { coinId: "chainlink",  symbol: "LINK", name: "Chainlink",     color: "#2A5ADA", fallbackPrice: 14.50 },
   { coinId: "aerodrome-finance", symbol: "AERO", name: "Aerodrome", color: "#0052FF", fallbackPrice: 0.80 },
+  { coinId: "pax-gold", symbol: "PAXG", name: "Digital Gold", color: "#C5A059", fallbackPrice: 2350 },
+  { coinId: "ondo-us-dollar-yield", symbol: "USDY", name: "U.S. Treasury", color: "#10B981", fallbackPrice: 1.02 },
+  { coinId: "real-estate-fund", symbol: "REF", name: "Rental Income", color: "#10B981", fallbackPrice: 100 },
 ];
 
 const COIN_META: Record<string, { symbol: string; name: string }> = {};

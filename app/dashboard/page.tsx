@@ -30,6 +30,7 @@ import RecentActivity from "@/components/dashboard/RecentActivity";
 import AutopilotToggle from "@/components/dashboard/AutopilotToggle";
 import YieldLottery from "@/components/games/YieldLottery";
 import PredictionWidget from "@/components/games/PredictionWidget";
+import { PortfolioDiversity } from "@/components/dashboard/PortfolioDiversity";
 
 // ─── Types ───
 
@@ -114,6 +115,36 @@ const VAULT_OPPORTUNITIES = [
     tvlUsd: 6_800_000,
     risk: "Low",
     color: "#9945FF",
+  },
+  {
+    id: "vault-usdy-treasury",
+    name: "U.S. Treasury Yield",
+    asset: "USDY",
+    apyBps: 520,
+    apyLabel: "5.20%",
+    tvlUsd: 250_000_000,
+    risk: "AAA",
+    color: "#10B981",
+  },
+  {
+    id: "vault-paxg-gold",
+    name: "Digital Gold",
+    asset: "PAXG",
+    apyBps: 120,
+    apyLabel: "1.20%",
+    tvlUsd: 50_000_000,
+    risk: "AAA",
+    color: "#C5A059",
+  },
+  {
+    id: "vault-ref-rental",
+    name: "Rental Income Fund",
+    asset: "REF",
+    apyBps: 740,
+    apyLabel: "7.40%",
+    tvlUsd: 8_500_000,
+    risk: "A+",
+    color: "#10B981",
   },
 ];
 
@@ -201,7 +232,7 @@ export default function DashboardPage() {
 
   // ─── Dynamic Gains Projection ───
 
-  const { projectionTotals } = useMemo(() => {
+  const { projectionTotals, diversityData } = useMemo(() => {
     const holdings: Holding[] = [];
     const apyBpsMap: Record<string, number> = {};
 
@@ -245,8 +276,19 @@ export default function DashboardPage() {
       apyBpsMap[coinId] = a.apyBps;
     }
 
+    const diversityData = (userData?.stakedAssets ?? []).map((a) => {
+      let category = "Growth";
+      if (["USDC", "USDT", "USDY"].includes(a.assetSymbol)) category = "Stability";
+      if (["PAXG", "REF"].includes(a.assetSymbol)) category = "Commodities";
+      
+      return {
+        category,
+        valueCents: BigInt(Math.round(a.principalUsd * 100)),
+      };
+    });
+
     const { totals } = calculatePortfolioProjections(holdings, apyBpsMap);
-    return { projectionTotals: totals };
+    return { projectionTotals: totals, diversityData };
   }, [ethBalance, ethPrice, prices, userData]);
 
   // ─── Render Guards ───
@@ -686,12 +728,15 @@ export default function DashboardPage() {
         </div>
 
         {/* ─── Gamification: Lottery + Prediction ─── */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <YieldLottery
-            walletAddress={address ?? ""}
-            ticketCount={userData?.stakedAssets?.length ?? 0}
-          />
-          <PredictionWidget currentEthPrice={ethPrice || 3500} />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <YieldLottery
+              walletAddress={address ?? ""}
+              ticketCount={userData?.stakedAssets?.length ?? 0}
+            />
+            <PredictionWidget currentEthPrice={ethPrice || 3500} />
+          </div>
+          <PortfolioDiversity data={diversityData} />
         </div>
 
         {/* ─── Active Positions ─── */}
