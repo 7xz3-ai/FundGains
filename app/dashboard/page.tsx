@@ -1,21 +1,31 @@
 "use client";
 
 // app/dashboard/page.tsx
-// Main dashboard: premium fintech design with glass cards, generous spacing.
+// Main dashboard: real-time blockchain balance, live prices, vault opportunities,
+// dynamic gains projection, and Add Funds utility.
+// Premium fintech design with Trust Blue accent.
 
-import { useAccount, useDisconnect } from "wagmi";
+import { useAccount, useBalance } from "wagmi";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import {
   calculatePortfolioProjections,
   formatCents,
   type Holding,
 } from "@/services/projections.service";
+import {
+  fetchMarketPrices,
+  getEthPrice,
+  type MarketPrice,
+} from "@/services/market.service";
 import NotificationCenter from "@/components/notification-center";
 import VaultRiskBadge from "@/components/vault-risk-badge";
 import SmartYieldAlert from "@/components/dashboard/SmartYieldAlert";
 import LevelXPBar from "@/components/dashboard/LevelXPBar";
+import AddFundsModal from "@/components/dashboard/AddFundsModal";
+
+// ─── Types ───
 
 interface UserData {
   displayName: string;
@@ -35,60 +45,95 @@ interface UserData {
   }>;
 }
 
-interface Price {
-  coinId: string;
-  symbol: string;
-  priceUsd: number;
-  change24hPct: number | null;
-  isStale: boolean;
-}
+// ─── Static Vault Opportunities ───
 
-const SUPPORTED_COINS = ["ethereum", "bitcoin", "usd-coin"];
+const VAULT_OPPORTUNITIES = [
+  {
+    id: "vault-base-eth",
+    name: "Base ETH Yield",
+    asset: "ETH",
+    apyBps: 420,
+    apyLabel: "4.20%",
+    tvlUsd: 4_200_000,
+    risk: "Low",
+    color: "#627EEA",
+  },
+  {
+    id: "vault-usdc-stable",
+    name: "USDC Stable-Vault",
+    asset: "USDC",
+    apyBps: 850,
+    apyLabel: "8.50%",
+    tvlUsd: 12_500_000,
+    risk: "Minimal",
+    color: "#2775CA",
+  },
+  {
+    id: "vault-sol-liquid",
+    name: "Solana Liquid Stake",
+    asset: "SOL",
+    apyBps: 710,
+    apyLabel: "7.10%",
+    tvlUsd: 6_800_000,
+    risk: "Low",
+    color: "#9945FF",
+  },
+];
+
+// ─── Component ───
 
 export default function DashboardPage() {
   const { address, isConnected } = useAccount();
-  const { disconnect } = useDisconnect();
   const router = useRouter();
 
+  // Real on-chain ETH balance via wagmi
+  const {
+    data: balanceData,
+    isLoading: balanceLoading,
+    refetch: refetchBalance,
+  } = useBalance({
+    address: address,
+    query: { enabled: !!address },
+  });
+
   const [userData, setUserData] = useState<UserData | null>(null);
-  const [prices, setPrices] = useState<Price[]>([]);
+  const [prices, setPrices] = useState<MarketPrice[]>([]);
   const [bullMode, setBullMode] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [showDeposit, setShowDeposit] = useState(false);
 
+  // Redirect if not connected
   useEffect(() => {
-    if (!isConnected) {
-      router.push("/");
-    }
+    if (!isConnected) router.push("/");
   }, [isConnected, router]);
 
+  // Fetch user data + live prices
   useEffect(() => {
-    if (!isConnected) return;
+    if (!isConnected || !address) return;
 
     async function load() {
-      if (!address) return;
       setLoading(true);
       try {
-        const [userRes, priceRes] = await Promise.all([
+        const [userRes, marketPrices] = await Promise.all([
           fetch("/api/user", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ walletAddress: address }),
           }),
-          fetch(`/api/prices?coins=${SUPPORTED_COINS.join(",")}`),
+          fetchMarketPrices(),
         ]);
         const user = await userRes.json();
-        const priceData = await priceRes.json();
         setUserData(user);
-        setPrices(priceData.prices ?? []);
+        setPrices(marketPrices);
 
-        // Record daily check-in
+        // Record daily check-in (fire and forget)
         fetch("/api/gamification", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ walletAddress: address }),
         }).catch(() => {});
       } catch (e) {
-        console.error(e);
+        console.error("Dashboard load error:", e);
       } finally {
         setLoading(false);
       }
@@ -97,7 +142,74 @@ export default function DashboardPage() {
     load();
   }, [isConnected, address]);
 
+  // Auto-refresh prices every 30s
+  useEffect(() => {
+    if (!isConnected) return;
+    const interval = setInterval(async () => {
+      const fresh = await fetchMarketPrices();
+      setPrices(fresh);
+    }, 30_000);
+    return () => clearInterval(interval);
+  }, [isConnected]);
+
+  // ─── Derived Values ───
+
+  const ethPrice = useMemo(() => getEthPrice(prices), [prices]);
+
+  // Real ETH balance formatted to 4 decimals
+  const ethBalance = balanceData
+    ? parseFloat(balanceData.formatted)
+    : 0;
+  const ethBalanceDisplay = ethBalance.toFixed(4);
+  const ethBalanceUsd = ethBalance * ethPrice;
+
+  // ─── Dynamic Gains Projection ───
+  // Uses real balance + default 5% APY, or staked assets if available.
+
+  const { projectionTotals } = useMemo(() => {
+    const holdings: Holding[] = [];
+    const apyBpsMap: Record<string, number> = {};
+
+    // Include real wallet balance as a "holding" for projection
+    if (ethBalance > 0) {
+      holdings.push({
+        coinId: "ethereum",
+        symbol: "ETH",
+        amount: ethBalance,
+        priceCents: BigInt(Math.round(ethPrice * 100)),
+      });
+      apyBpsMap["ethereum"] = 500; // default 5% APY
+    }
+
+    // Include staked assets
+    for (const a of userData?.stakedAssets ?? []) {
+      const coinId =
+        a.assetSymbol === "ETH"
+          ? "ethereum"
+          : a.assetSymbol === "USDC"
+          ? "usd-coin"
+          : a.assetSymbol.toLowerCase();
+      const price = prices.find((p) => p.coinId === coinId);
+      const priceCents = price
+        ? BigInt(Math.round(price.priceUsd * 100))
+        : 1n;
+      holdings.push({
+        coinId,
+        symbol: a.assetSymbol,
+        amount: a.principalUsd / (Number(priceCents) / 100 || 1),
+        priceCents,
+      });
+      apyBpsMap[coinId] = a.apyBps;
+    }
+
+    const { totals } = calculatePortfolioProjections(holdings, apyBpsMap);
+    return { projectionTotals: totals };
+  }, [ethBalance, ethPrice, prices, userData]);
+
+  // ─── Render Guards ───
+
   if (!isConnected) return null;
+
   if (loading) {
     return (
       <div className="min-h-screen bg-mesh flex items-center justify-center">
@@ -108,33 +220,6 @@ export default function DashboardPage() {
       </div>
     );
   }
-
-  const holdings: Holding[] = (userData?.stakedAssets ?? []).map((a) => {
-    const coinId =
-      a.assetSymbol === "ETH"
-        ? "ethereum"
-        : a.assetSymbol === "BTC"
-        ? "bitcoin"
-        : a.assetSymbol.toLowerCase();
-    const price = prices.find((p) => p.coinId === coinId);
-    const priceCents = price ? BigInt(Math.round(price.priceUsd * 100)) : 1n;
-    return {
-      coinId,
-      symbol: a.assetSymbol,
-      amount: a.principalUsd / (Number(priceCents) / 100 || 1),
-      priceCents,
-    };
-  });
-
-  const apyBpsMap = Object.fromEntries(
-    (userData?.stakedAssets ?? []).map((a) => {
-      const coinId =
-        a.assetSymbol === "ETH" ? "ethereum" : a.assetSymbol.toLowerCase();
-      return [coinId, a.apyBps];
-    })
-  );
-
-  const { totals } = calculatePortfolioProjections(holdings, apyBpsMap);
 
   return (
     <div className="min-h-screen bg-mesh">
@@ -158,7 +243,6 @@ export default function DashboardPage() {
               Referrals
             </button>
             <NotificationCenter />
-            {/* Level & XP in nav */}
             <LevelXPBar
               level={userData?.level ?? 1}
               xp={userData?.xp ?? 0}
@@ -241,13 +325,39 @@ export default function DashboardPage() {
 
         {/* ─── Balance Overview ─── */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Cash Balance — Real on-chain ETH */}
           <div className="card p-8">
-            <p className="text-[13px] text-text-muted mb-2">Cash Balance</p>
-            <p className="text-3xl font-bold text-text-primary tracking-tight">
-              ${userData?.cashBalanceUsd.toFixed(2) ?? "0.00"}
-            </p>
-            <p className="text-[13px] text-text-dim mt-1">Available to stake</p>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-[13px] text-text-muted">Cash Balance</p>
+              <button
+                onClick={() => setShowDeposit(true)}
+                className="btn-primary text-[12px] px-4 py-1.5 rounded-xl"
+              >
+                Deposit
+              </button>
+            </div>
+            {balanceLoading ? (
+              <div className="space-y-2">
+                <div className="h-9 w-48 rounded-xl bg-accent/10 animate-pulse" />
+                <div className="h-4 w-32 rounded-lg bg-white/[0.04] animate-pulse" />
+              </div>
+            ) : (
+              <>
+                <p className="text-3xl font-bold text-text-primary tracking-tight">
+                  {ethBalanceDisplay}{" "}
+                  <span className="text-lg text-text-muted font-medium">ETH</span>
+                </p>
+                <p className="text-[14px] text-text-secondary mt-1">
+                  ≈ ${ethBalanceUsd.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </p>
+                <p className="text-[12px] text-text-dim mt-0.5">
+                  @ ${ethPrice.toLocaleString("en-US", { minimumFractionDigits: 2 })} / ETH
+                </p>
+              </>
+            )}
           </div>
+
+          {/* Staked Balance */}
           <div className="card p-8 border-accent/10">
             <p className="text-[13px] text-text-muted mb-2">Staked Balance</p>
             <p className="text-3xl font-bold gradient-text-green tracking-tight">
@@ -257,15 +367,17 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* ─── Gains Projection ─── */}
+        {/* ─── Gains Projection (Dynamic) ─── */}
         <div className="card p-8">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-lg font-semibold text-text-primary">Gains Projection</h2>
+              <h2 className="text-lg font-semibold text-text-primary">
+                Gains Projection
+              </h2>
               <p className="text-[13px] text-text-muted mt-0.5">
                 {bullMode
                   ? "Bull Market Mode — 2x price + yield (simulation)"
-                  : "Realistic yield projection (APY only)"}
+                  : "Realistic yield projection at 5% APY"}
               </p>
             </div>
             <button
@@ -280,25 +392,47 @@ export default function DashboardPage() {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <StatCard
-              label="Current Portfolio"
-              value={formatCents(totals.currentValueCents)}
-              variant="muted"
-            />
-            <StatCard
-              label="1-Year Yield"
-              value={`+${formatCents(bullMode ? totals.bullMarketGainCents : totals.realisticGainCents)}`}
-              variant="accent"
-            />
-            <StatCard
-              label="Total After 1 Year"
-              value={formatCents(bullMode ? totals.bullMarketTotal1yCents : totals.realisticTotal1yCents)}
-              variant="highlight"
-            />
-          </div>
+          {projectionTotals.currentValueCents > 0n ? (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <StatCard
+                label="Current Portfolio"
+                value={formatCents(projectionTotals.currentValueCents)}
+                variant="muted"
+              />
+              <StatCard
+                label="1-Year Yield"
+                value={`+${formatCents(
+                  bullMode
+                    ? projectionTotals.bullMarketGainCents
+                    : projectionTotals.realisticGainCents
+                )}`}
+                variant="accent"
+              />
+              <StatCard
+                label="Total After 1 Year"
+                value={formatCents(
+                  bullMode
+                    ? projectionTotals.bullMarketTotal1yCents
+                    : projectionTotals.realisticTotal1yCents
+                )}
+                variant="highlight"
+              />
+            </div>
+          ) : (
+            <div className="py-8 text-center">
+              <p className="text-text-muted text-[14px]">
+                Deposit ETH to see your yield projections.
+              </p>
+              <button
+                onClick={() => setShowDeposit(true)}
+                className="btn-primary text-[13px] px-5 py-2.5 mt-4"
+              >
+                Add Funds
+              </button>
+            </div>
+          )}
 
-          {bullMode && (
+          {bullMode && projectionTotals.currentValueCents > 0n && (
             <p className="mt-5 text-[12px] text-text-dim border-t border-white/[0.04] pt-4">
               Simulation assumes 2x asset prices. Not financial advice. Past performance is not indicative of future results.
             </p>
@@ -307,27 +441,64 @@ export default function DashboardPage() {
 
         {/* ─── Live Prices ─── */}
         <div className="card p-8">
-          <h2 className="text-lg font-semibold text-text-primary mb-5">Live Prices</h2>
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-lg font-semibold text-text-primary">
+              Live Prices
+            </h2>
+            <span className="text-[12px] text-text-dim">
+              Auto-refreshes every 30s
+            </span>
+          </div>
           <div className="space-y-1">
             {prices.map((p) => (
               <div
                 key={p.coinId}
-                className="flex items-center justify-between py-3 border-b border-white/[0.04] last:border-0"
+                className="flex items-center justify-between py-3.5 border-b border-white/[0.04] last:border-0"
               >
-                <span className="text-[14px] font-medium text-text-secondary">{p.symbol}</span>
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-8 h-8 rounded-xl flex items-center justify-center text-[12px] font-bold text-white"
+                    style={{
+                      backgroundColor:
+                        p.coinId === "ethereum"
+                          ? "#627EEA"
+                          : p.coinId === "usd-coin"
+                          ? "#2775CA"
+                          : p.coinId === "solana"
+                          ? "#9945FF"
+                          : "#6B7280",
+                    }}
+                  >
+                    {p.symbol.slice(0, 1)}
+                  </div>
+                  <div>
+                    <span className="text-[14px] font-semibold text-text-primary">
+                      {p.symbol}
+                    </span>
+                    <span className="text-[12px] text-text-dim ml-2">
+                      {p.name}
+                    </span>
+                  </div>
+                </div>
                 <div className="flex items-center gap-4">
                   {p.change24hPct != null && (
                     <span
-                      className={`text-[13px] font-medium ${
-                        p.change24hPct >= 0 ? "text-[#34D399]" : "text-[#EF4444]"
+                      className={`text-[13px] font-semibold px-2.5 py-1 rounded-lg ${
+                        p.change24hPct >= 0
+                          ? "text-[#34D399] bg-[#34D399]/10"
+                          : "text-[#EF4444] bg-[#EF4444]/10"
                       }`}
                     >
                       {p.change24hPct >= 0 ? "+" : ""}
                       {p.change24hPct.toFixed(2)}%
                     </span>
                   )}
-                  <span className="text-[15px] font-semibold text-text-primary">
-                    ${p.priceUsd.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                  <span className="text-[15px] font-semibold text-text-primary min-w-[90px] text-right">
+                    $
+                    {p.priceUsd.toLocaleString("en-US", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
                   </span>
                   {p.isStale && (
                     <span className="text-[11px] text-[#F59E0B]">(stale)</span>
@@ -335,32 +506,90 @@ export default function DashboardPage() {
                 </div>
               </div>
             ))}
+            {prices.length === 0 && (
+              <div className="py-6 text-center">
+                <p className="text-text-dim text-[13px]">Loading prices...</p>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* ─── Active Vaults ─── */}
+        {/* ─── Vault Opportunities ─── */}
         <div className="card p-8">
           <div className="flex items-center justify-between mb-5">
-            <h2 className="text-lg font-semibold text-text-primary">Active Vaults</h2>
+            <div>
+              <h2 className="text-lg font-semibold text-text-primary">
+                Vault Opportunities
+              </h2>
+              <p className="text-[13px] text-text-muted mt-0.5">
+                Non-custodial yield vaults on Base
+              </p>
+            </div>
             <button
               onClick={() => router.push("/dashboard/vaults")}
               className="text-[13px] text-accent hover:text-accent/80 transition-colors font-medium"
             >
-              Browse Vaults
+              View All
             </button>
           </div>
-          {userData?.stakedAssets.length === 0 ? (
-            <div className="py-12 text-center">
-              <p className="text-text-muted text-[14px]">
-                No active positions yet.
-              </p>
-              <p className="text-text-dim text-[13px] mt-1">
-                Connect your assets to a vault to start earning.
-              </p>
-            </div>
-          ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {VAULT_OPPORTUNITIES.map((vault) => (
+              <div
+                key={vault.id}
+                className="rounded-2xl bg-white/[0.02] border border-white/[0.04] p-6 hover:border-white/[0.08] transition-colors"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2.5">
+                    <div
+                      className="w-8 h-8 rounded-xl flex items-center justify-center text-[12px] font-bold text-white"
+                      style={{ backgroundColor: vault.color }}
+                    >
+                      {vault.asset.slice(0, 1)}
+                    </div>
+                    <div>
+                      <p className="text-[14px] font-semibold text-text-primary">
+                        {vault.name}
+                      </p>
+                      <p className="text-[12px] text-text-dim">{vault.asset}</p>
+                    </div>
+                  </div>
+                  <VaultRiskBadge vaultId={vault.id} compact />
+                </div>
+
+                <div className="flex items-end justify-between mb-5">
+                  <div>
+                    <p className="text-[12px] text-text-dim mb-0.5">APY</p>
+                    <p className="text-2xl font-bold gradient-text-green">
+                      {vault.apyLabel}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[12px] text-text-dim mb-0.5">TVL</p>
+                    <p className="text-[15px] font-semibold text-text-primary">
+                      ${(vault.tvlUsd / 1_000_000).toFixed(1)}M
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => router.push("/dashboard/vaults")}
+                  className="w-full py-2.5 rounded-xl btn-primary text-[13px]"
+                >
+                  Stake {vault.asset}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ─── Active Positions ─── */}
+        {userData?.stakedAssets && userData.stakedAssets.length > 0 && (
+          <div className="card p-8">
+            <h2 className="text-lg font-semibold text-text-primary mb-5">
+              Active Positions
+            </h2>
             <div className="space-y-3">
-              {userData?.stakedAssets.map((a) => (
+              {userData.stakedAssets.map((a) => (
                 <div
                   key={a.id}
                   className="flex items-center justify-between p-4 rounded-2xl bg-white/[0.02] border border-white/[0.04] hover:border-white/[0.08] transition-colors"
@@ -387,12 +616,24 @@ export default function DashboardPage() {
                 </div>
               ))}
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </main>
+
+      {/* ─── Add Funds Modal ─── */}
+      <AddFundsModal
+        isOpen={showDeposit}
+        onClose={() => {
+          setShowDeposit(false);
+          refetchBalance();
+        }}
+        walletAddress={address ?? ""}
+      />
     </div>
   );
 }
+
+// ─── Stat Card ───
 
 function StatCard({
   label,
