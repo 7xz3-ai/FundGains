@@ -96,8 +96,8 @@ export function calculatePortfolioProjections(
     projections,
     totals: {
       currentValueCents: totalCurrentCents,
-      realisticTotal1yCents,
-      bullMarketTotal1yCents,
+      realisticTotal1yCents: totalRealistic1yCents,
+      bullMarketTotal1yCents: totalBullMarket1yCents,
       realisticGainCents: totalRealistic1yCents - totalCurrentCents,
       bullMarketGainCents: totalBullMarket1yCents - totalCurrentCents,
     },

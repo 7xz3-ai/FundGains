@@ -95,8 +95,13 @@ export default function ConvertPage() {
     setQuote(null);
   }
 
+  useEffect(() => {
+    if (!isConnected) {
+      router.push("/");
+    }
+  }, [isConnected, router]);
+
   if (!isConnected) {
-    router.push("/");
     return null;
   }
 
