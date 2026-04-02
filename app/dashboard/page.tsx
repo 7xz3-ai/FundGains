@@ -2,7 +2,7 @@
 
 // app/dashboard/page.tsx
 // Main dashboard: real-time blockchain balance, live prices, vault opportunities,
-// dynamic gains projection, and Add Funds utility.
+// dynamic gains projection, Add Funds, Recent Activity, Gamification widgets.
 // Premium fintech design with Trust Blue accent.
 
 import { useAccount, useBalance } from "wagmi";
@@ -24,6 +24,9 @@ import VaultRiskBadge from "@/components/vault-risk-badge";
 import SmartYieldAlert from "@/components/dashboard/SmartYieldAlert";
 import LevelXPBar from "@/components/dashboard/LevelXPBar";
 import AddFundsModal from "@/components/dashboard/AddFundsModal";
+import RecentActivity from "@/components/dashboard/RecentActivity";
+import YieldLottery from "@/components/games/YieldLottery";
+import PredictionWidget from "@/components/games/PredictionWidget";
 
 // ─── Types ───
 
@@ -101,6 +104,7 @@ export default function DashboardPage() {
   const [bullMode, setBullMode] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showDeposit, setShowDeposit] = useState(false);
+  const [showActivity, setShowActivity] = useState(false);
 
   // Redirect if not connected
   useEffect(() => {
@@ -157,20 +161,16 @@ export default function DashboardPage() {
   const ethPrice = useMemo(() => getEthPrice(prices), [prices]);
 
   // Real ETH balance formatted to 4 decimals
-  const ethBalance = balanceData
-    ? parseFloat(balanceData.formatted)
-    : 0;
+  const ethBalance = balanceData ? parseFloat(balanceData.formatted) : 0;
   const ethBalanceDisplay = ethBalance.toFixed(4);
   const ethBalanceUsd = ethBalance * ethPrice;
 
   // ─── Dynamic Gains Projection ───
-  // Uses real balance + default 5% APY, or staked assets if available.
 
   const { projectionTotals } = useMemo(() => {
     const holdings: Holding[] = [];
     const apyBpsMap: Record<string, number> = {};
 
-    // Include real wallet balance as a "holding" for projection
     if (ethBalance > 0) {
       holdings.push({
         coinId: "ethereum",
@@ -178,10 +178,9 @@ export default function DashboardPage() {
         amount: ethBalance,
         priceCents: BigInt(Math.round(ethPrice * 100)),
       });
-      apyBpsMap["ethereum"] = 500; // default 5% APY
+      apyBpsMap["ethereum"] = 500;
     }
 
-    // Include staked assets
     for (const a of userData?.stakedAssets ?? []) {
       const coinId =
         a.assetSymbol === "ETH"
@@ -231,16 +230,34 @@ export default function DashboardPage() {
           </span>
           <div className="flex items-center gap-3 sm:gap-5">
             <button
-              onClick={() => router.push("/dashboard/convert")}
+              onClick={() => router.push("/convert")}
               className="text-[13px] text-text-muted hover:text-text-primary transition-colors hidden sm:block"
             >
               Convert
+            </button>
+            <button
+              onClick={() => router.push("/liquidity")}
+              className="text-[13px] text-text-muted hover:text-text-primary transition-colors hidden sm:block"
+            >
+              Liquidity
             </button>
             <button
               onClick={() => router.push("/dashboard/referral")}
               className="text-[13px] text-text-muted hover:text-text-primary transition-colors hidden sm:block"
             >
               Referrals
+            </button>
+            {/* Recent Activity Button */}
+            <button
+              onClick={() => setShowActivity(true)}
+              className="w-9 h-9 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center text-text-muted hover:text-text-primary transition-colors relative"
+              title="Recent Activity"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12,6 12,12 16,14" />
+              </svg>
+              <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-accent" />
             </button>
             <NotificationCenter />
             <LevelXPBar
@@ -263,7 +280,7 @@ export default function DashboardPage() {
         <SmartYieldAlert walletAddress={address ?? ""} />
 
         {/* ─── Quick Actions ─── */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
           {[
             {
               label: "Stake",
@@ -277,13 +294,22 @@ export default function DashboardPage() {
             },
             {
               label: "Convert",
-              href: "/dashboard/convert",
+              href: "/convert",
               icon: (
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-[#2D9FFF]">
                   <polyline points="17,1 21,5 17,9" />
                   <path d="M3 11V9a4 4 0 0 1 4-4h14" />
                   <polyline points="7,23 3,19 7,15" />
                   <path d="M21 13v2a4 4 0 0 1-4 4H3" />
+                </svg>
+              ),
+            },
+            {
+              label: "Liquidity",
+              href: "/liquidity",
+              icon: (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-[#C084FC]">
+                  <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
                 </svg>
               ),
             },
@@ -313,7 +339,7 @@ export default function DashboardPage() {
             <button
               key={action.label}
               onClick={() => router.push(action.href)}
-              className="card p-5 flex flex-col items-center gap-2.5 hover:scale-[1.02] transition-transform cursor-pointer"
+              className="card p-5 flex flex-col items-center gap-2.5 hover:border-accent/20"
             >
               {action.icon}
               <span className="text-[13px] font-medium text-text-primary">
@@ -348,10 +374,18 @@ export default function DashboardPage() {
                   <span className="text-lg text-text-muted font-medium">ETH</span>
                 </p>
                 <p className="text-[14px] text-text-secondary mt-1">
-                  ≈ ${ethBalanceUsd.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  ≈ $
+                  {ethBalanceUsd.toLocaleString("en-US", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
                 </p>
                 <p className="text-[12px] text-text-dim mt-0.5">
-                  @ ${ethPrice.toLocaleString("en-US", { minimumFractionDigits: 2 })} / ETH
+                  @ $
+                  {ethPrice.toLocaleString("en-US", {
+                    minimumFractionDigits: 2,
+                  })}{" "}
+                  / ETH
                 </p>
               </>
             )}
@@ -434,7 +468,8 @@ export default function DashboardPage() {
 
           {bullMode && projectionTotals.currentValueCents > 0n && (
             <p className="mt-5 text-[12px] text-text-dim border-t border-white/[0.04] pt-4">
-              Simulation assumes 2x asset prices. Not financial advice. Past performance is not indicative of future results.
+              Simulation assumes 2x asset prices. Not financial advice. Past
+              performance is not indicative of future results.
             </p>
           )}
         </div>
@@ -582,6 +617,15 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        {/* ─── Gamification: Lottery + Prediction ─── */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <YieldLottery
+            walletAddress={address ?? ""}
+            ticketCount={userData?.stakedAssets?.length ?? 0}
+          />
+          <PredictionWidget currentEthPrice={ethPrice || 3500} />
+        </div>
+
         {/* ─── Active Positions ─── */}
         {userData?.stakedAssets && userData.stakedAssets.length > 0 && (
           <div className="card p-8">
@@ -620,7 +664,7 @@ export default function DashboardPage() {
         )}
       </main>
 
-      {/* ─── Add Funds Modal ─── */}
+      {/* ─── Modals & Drawers ─── */}
       <AddFundsModal
         isOpen={showDeposit}
         onClose={() => {
@@ -628,6 +672,12 @@ export default function DashboardPage() {
           refetchBalance();
         }}
         walletAddress={address ?? ""}
+      />
+
+      <RecentActivity
+        isOpen={showActivity}
+        onClose={() => setShowActivity(false)}
+        walletAddress={address}
       />
     </div>
   );

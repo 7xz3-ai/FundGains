@@ -187,6 +187,15 @@ body {
   animation: shimmer 2s infinite;
 }
 
+@keyframes slideInRight {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
 /* ─── Legacy compat (keep for pages not yet updated) ─── */
 .cyber-grid {
   /* removed harsh grid lines */
