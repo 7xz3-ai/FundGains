@@ -43,19 +43,19 @@ export async function POST(req: NextRequest) {
 
     // Fetch current price to convert token amount to USD cents
     const rawAmount: number = activity.value ?? 0;
-    let amountCents = 0n;
+    let amountCents = BigInt(0);
 
     try {
       const coinId = assetSymbol === "ETH" ? "ethereum" : assetSymbol.toLowerCase();
       const prices = await getPrices([coinId]);
-      const price = prices[0]?.priceCents ?? 0n;
+      const price = prices[0]?.priceCents ?? BigInt(0);
       amountCents = BigInt(Math.round(rawAmount * Number(price)));
     } catch {
       // If price fetch fails, use raw amount as cents (stablecoin fallback)
       amountCents = BigInt(Math.round(rawAmount * 100));
     }
 
-    if (amountCents <= 0n) continue;
+    if (amountCents <= BigInt(0)) continue;
 
     // Idempotency key = txHash to prevent duplicate crediting on webhook retries
     try {
