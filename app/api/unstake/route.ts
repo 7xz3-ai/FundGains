@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
       userId: user.id,
       stakedAssetId,
       idempotencyKey,
-      amountCents: 0n, // computed from asset internally
+      amountCents: BigInt(0), // computed from asset internally
     });
 
     return NextResponse.json({ transactionId: tx.id, status: tx.status });
