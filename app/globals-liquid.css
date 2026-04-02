@@ -1,0 +1,294 @@
+/* app/globals-liquid.css
+ * The 'Liquid' Design System: Bento Grid, Grainy Texture, Glassmorphism 2.0
+ */
+
+@import url("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;700&family=Inter+Tight:wght@400;500;600;700;800&display=swap");
+
+/* ─── Root Variables ─── */
+:root {
+  --color-obsidian: #0b0e11;
+  --color-dark-base: #0d0d14;
+  --color-trust-blue: #2d9fff;
+  --color-electric-cyan: #00f3ff;
+  --color-deep-emerald: #10b981;
+  --color-gold: #c5a059;
+
+  --blur-glass: 20px;
+  --blur-card: 12px;
+
+  /* Typography */
+  --font-mono: "Geist Mono", monospace;
+  --font-tight: "Inter Tight", sans-serif;
+}
+
+/* ─── Base Styles ─── */
+body {
+  font-family: var(--font-tight), system-ui, -apple-system, sans-serif;
+  background: linear-gradient(135deg, var(--color-obsidian) 0%, #1a1f2e 50%, var(--color-trust-blue) 100%);
+  background-attachment: fixed;
+  color: #e0e0e0;
+  overflow-x: hidden;
+}
+
+/* ─── Grainy Texture Overlay ─── */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' seed='2' /%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ─── Mesh Gradient Background ─── */
+.mesh-gradient {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 20% 50%, rgba(45, 159, 255, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(0, 243, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 40% 0%, rgba(16, 185, 129, 0.08) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ─── Main Content Wrapper ─── */
+main {
+  position: relative;
+  z-index: 2;
+}
+
+/* ─── Glassmorphism 2.0 Cards ─── */
+.card-glass {
+  background: rgba(13, 13, 20, 0.6);
+  backdrop-filter: blur(var(--blur-card));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.card-glass::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, transparent 100%);
+  pointer-events: none;
+}
+
+/* ─── Bento Grid Layout ─── */
+.bento-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  padding: 24px;
+}
+
+@media (min-width: 768px) {
+  .bento-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .bento-grid > .bento-item-tall {
+    grid-row: span 2;
+  }
+
+  .bento-grid > .bento-item-wide {
+    grid-column: span 2;
+  }
+
+  .bento-grid > .bento-item-hero {
+    grid-column: span 2;
+    grid-row: span 2;
+  }
+}
+
+/* ─── Typography: Fintech Terminal ─── */
+.text-terminal {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.text-number {
+  font-family: var(--font-mono);
+  font-weight: 800;
+  font-size: 1.5rem;
+  letter-spacing: -0.02em;
+  color: #fff;
+}
+
+/* ─── Accent Colors ─── */
+.accent-cyan {
+  color: var(--color-electric-cyan);
+}
+
+.accent-blue {
+  color: var(--color-trust-blue);
+}
+
+.accent-emerald {
+  color: var(--color-deep-emerald);
+}
+
+/* ─── Glow Effects ─── */
+.glow-cyan {
+  text-shadow: 0 0 20px rgba(0, 243, 255, 0.5);
+}
+
+.glow-red {
+  text-shadow: 0 0 20px rgba(239, 68, 68, 0.7);
+}
+
+.glow-blue {
+  text-shadow: 0 0 20px rgba(45, 159, 255, 0.6);
+}
+
+/* ─── Button Styles ─── */
+.btn-terminal {
+  background: linear-gradient(135deg, var(--color-trust-blue), var(--color-electric-cyan));
+  color: var(--color-obsidian);
+  border: none;
+  border-radius: 12px;
+  padding: 12px 24px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 20px rgba(45, 159, 255, 0.3);
+}
+
+.btn-terminal:hover {
+  box-shadow: 0 0 30px rgba(45, 159, 255, 0.6);
+  transform: translateY(-2px);
+}
+
+.btn-terminal:active {
+  transform: translateY(0);
+}
+
+/* ─── Input Styles ─── */
+.input-terminal {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(45, 159, 255, 0.3);
+  border-radius: 12px;
+  padding: 12px 16px;
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  transition: all 0.3s ease;
+}
+
+.input-terminal:focus {
+  outline: none;
+  border-color: var(--color-electric-cyan);
+  box-shadow: 0 0 20px rgba(0, 243, 255, 0.3);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* ─── Slider Styles (Leverage) ─── */
+.slider-terminal {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--color-trust-blue), var(--color-electric-cyan));
+  outline: none;
+  cursor: pointer;
+}
+
+.slider-terminal::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--color-electric-cyan);
+  cursor: pointer;
+  box-shadow: 0 0 15px rgba(0, 243, 255, 0.6);
+  transition: all 0.2s ease;
+}
+
+.slider-terminal::-webkit-slider-thumb:hover {
+  width: 24px;
+  height: 24px;
+  box-shadow: 0 0 25px rgba(0, 243, 255, 0.8);
+}
+
+.slider-terminal::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--color-electric-cyan);
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 0 15px rgba(0, 243, 255, 0.6);
+  transition: all 0.2s ease;
+}
+
+.slider-terminal::-moz-range-thumb:hover {
+  width: 24px;
+  height: 24px;
+  box-shadow: 0 0 25px rgba(0, 243, 255, 0.8);
+}
+
+/* ─── Liquidation Price Indicator ─── */
+.liquidation-indicator {
+  position: relative;
+  padding: 16px;
+  border-radius: 12px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  transition: all 0.3s ease;
+}
+
+.liquidation-indicator.danger {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.6);
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+}
+
+/* ─── Animations ─── */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes glow-pulse {
+  0%, 100% {
+    text-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
+  }
+  50% {
+    text-shadow: 0 0 20px rgba(0, 243, 255, 0.8);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.6s ease-out;
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
