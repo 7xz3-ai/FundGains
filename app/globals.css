@@ -209,3 +209,107 @@ body {
 .scanlines::after {
   display: none; /* removed CRT effect */
 }
+
+/* ─── Phase 9: Obsidian Gold Prestige Theme ─── */
+/* Applied via data-prestige="true" on <html> by client-side JS */
+
+[data-prestige="true"] {
+  --accent: #D4AF37;
+  --accent-soft: rgba(212, 175, 55, 0.12);
+  --accent-glow: rgba(212, 175, 55, 0.08);
+  --color-trust-blue: #D4AF37;
+  --color-gold: #D4AF37;
+}
+
+[data-prestige="true"] .gradient-text {
+  background: linear-gradient(135deg, #D4AF37 0%, #F5D76E 40%, #D4AF37 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+[data-prestige="true"] .btn-primary {
+  background: linear-gradient(135deg, #D4AF37, #F5D76E);
+  color: #0B0E11;
+}
+
+[data-prestige="true"] .btn-primary:hover {
+  background: linear-gradient(135deg, #C9A42E, #E8CA5A);
+  box-shadow: 0 4px 20px rgba(212, 175, 55, 0.3);
+}
+
+[data-prestige="true"] .bg-mesh {
+  background-image:
+    radial-gradient(at 20% 20%, rgba(212, 175, 55, 0.05) 0px, transparent 50%),
+    radial-gradient(at 80% 80%, rgba(212, 175, 55, 0.03) 0px, transparent 50%);
+}
+
+/* ─── Metal Card 3D Tilt ─── */
+.metal-card {
+  background: linear-gradient(145deg, #0B0E11 0%, #1a1d24 40%, #0B0E11 100%);
+  border: 1px solid rgba(212, 175, 55, 0.15);
+  border-radius: 16px;
+  position: relative;
+  overflow: hidden;
+  transform-style: preserve-3d;
+  perspective: 1000px;
+  transition: transform 0.1s ease;
+}
+
+.metal-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 40%,
+    rgba(212, 175, 55, 0.06) 45%,
+    rgba(212, 175, 55, 0.12) 50%,
+    rgba(212, 175, 55, 0.06) 55%,
+    transparent 60%
+  );
+  pointer-events: none;
+  transition: transform 0.3s ease;
+}
+
+.metal-card:hover::before {
+  transform: translateX(100%);
+}
+
+.metal-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+    rgba(212, 175, 55, 0.08) 0%,
+    transparent 60%
+  );
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.metal-card:hover::after {
+  opacity: 1;
+}
+
+/* ─── Security Ticker ─── */
+.security-ticker {
+  background: rgba(11, 14, 17, 0.8);
+  backdrop-filter: blur(16px);
+  border-top: 1px solid rgba(212, 175, 55, 0.1);
+}
+
+@keyframes ticker-pulse {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
+.ticker-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #34D399;
+  animation: ticker-pulse 2s ease-in-out infinite;
+}

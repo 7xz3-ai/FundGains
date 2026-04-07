@@ -31,6 +31,8 @@ import AutopilotToggle from "@/components/dashboard/AutopilotToggle";
 import YieldLottery from "@/components/games/YieldLottery";
 import PredictionWidget from "@/components/games/PredictionWidget";
 import { PortfolioDiversity } from "@/components/dashboard/PortfolioDiversity";
+import PrestigeProvider from "@/components/PrestigeProvider";
+import SecurityTicker from "@/components/SecurityTicker";
 
 // ─── Types ───
 
@@ -315,6 +317,9 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-mesh">
+      {/* ─── Prestige Theme (Gold accents for high-value users) ─── */}
+      <PrestigeProvider level={userData?.level ?? 1} ethPriceUsd={ethPrice} />
+
       {/* ─── Navigation ─── */}
       <nav className="bg-base/80 backdrop-blur-xl border-b border-white/[0.04] sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
@@ -345,6 +350,12 @@ export default function DashboardPage() {
               className="text-[13px] text-text-muted hover:text-text-primary transition-colors hidden sm:block"
             >
               Launchpad
+            </button>
+            <button
+              onClick={() => router.push("/card")}
+              className="text-[13px] text-text-muted hover:text-text-primary transition-colors hidden sm:block"
+            >
+              Card
             </button>
             <button
               onClick={() => router.push("/governance")}
@@ -804,8 +815,8 @@ export default function DashboardPage() {
             { label: "Convert", href: "/convert" },
             { label: "Liquidity", href: "/liquidity" },
             { label: "Referrals", href: "/dashboard/referral" },
-            { label: "Launchpad", href: "/launchpad" },
-            { label: "DAO", href: "/governance" },
+            { label: "Card", href: "/card" },
+            { label: "Withdraw", href: "/withdraw" },
             { label: "Profile", href: "/profile" },
           ].map((item) => (
             <button
@@ -818,6 +829,9 @@ export default function DashboardPage() {
           ))}
         </div>
       </main>
+
+      {/* ─── Security Ticker Footer ─── */}
+      <SecurityTicker />
 
       {/* ─── Modals & Drawers ─── */}
       <AddFundsModal

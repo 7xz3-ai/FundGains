@@ -106,6 +106,10 @@ model User {
   votes            Vote[]      @relation("Voter")
   contributions    LaunchpadContribution[] @relation("LaunchpadContributor")
 
+  // Phase 9: Global Bank
+  withdrawals      WithdrawalRequest[] @relation("Withdrawals")
+  metalCard        MetalCard?          @relation("MetalCard")
+
   @@index([walletAddress])
   @@index([referralCode])
 }
@@ -489,4 +493,68 @@ model LaunchpadContribution {
   @@unique([projectId, userId]) // one contribution per user per project
   @@index([projectId])
   @@index([userId])
+}
+
+// ---------------------------------------------------------------------------
+// PHASE 9: GLOBAL BANK — Insurance Fund, Fiat Off-Ramp, Metal Card
+// ---------------------------------------------------------------------------
+
+// Insurance Fund — protocol safety reserves (10% of platform fees)
+model InsuranceFund {
+  id                String   @id @default(cuid())
+  totalBalanceCents BigInt   @default(0) // current fund balance
+  totalInflowCents  BigInt   @default(0) // lifetime inflows
+  totalClaimsCents  BigInt   @default(0) // lifetime claims paid
+  lastUpdated       DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+// Insurance Fund ledger entries
+model InsuranceFundTransaction {
+  id          String   @id @default(cuid())
+  amountCents BigInt
+  type        String   // "FEE_CONTRIBUTION", "CLAIM_PAYOUT"
+  description String?
+  swapRecordId String? // link to swap that generated the fee
+  createdAt   DateTime @default(now())
+
+  @@index([type, createdAt])
+}
+
+// Fiat withdrawal requests
+model WithdrawalRequest {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation("Withdrawals", fields: [userId], references: [id])
+  asset           String   // "USDC" or "USDT" only
+  amountCents     BigInt
+  fiatCurrency    String   @default("USD")
+  bankRef         String?  // masked bank reference (last 4 digits)
+  provider        String   @default("TRANSAK") // TRANSAK, MOONPAY, STRIPE
+  status          String   @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED
+  estimatedDays   Int      @default(2) // 1-3 business days
+  providerOrderId String?  // external provider order ID
+  feeCents        BigInt   @default(0)
+  createdAt       DateTime @default(now())
+  completedAt     DateTime?
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId, status])
+  @@index([status, createdAt])
+}
+
+// Virtual Metal Card
+model MetalCard {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation("MetalCard", fields: [userId], references: [id])
+  cardNumber  String   // masked: **** **** **** 1234
+  expiryMonth Int
+  expiryYear  Int
+  isFrozen    Boolean  @default(false)
+  tier        String   @default("OBSIDIAN") // OBSIDIAN, GOLD, PLATINUM
+  spentCents  BigInt   @default(0)
+  limitCents  BigInt   @default(500000) // $5,000 default limit
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
