@@ -1,18 +1,14 @@
 "use client";
 
 // app/layout.tsx
-// Root layout: RainbowKit + Wagmi + React Query providers.
+// Root layout: delegates provider stack to Providers.tsx.
 // Premium fintech dark theme.
 
 import "@rainbow-me/rainbowkit/styles.css";
 import "./globals.css";
 import "./globals-liquid.css";
 import localFont from "next/font/local";
-import { WagmiProvider } from "wagmi";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { RainbowKitProvider, darkTheme } from "@rainbow-me/rainbowkit";
-import { wagmiConfig } from "@/lib/wagmi";
-import { useState } from "react";
+import Providers from "./providers";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -25,26 +21,10 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [queryClient] = useState(() => new QueryClient());
-
   return (
     <html lang="en" className="dark">
       <body className={`${geistSans.variable} font-sans bg-[#050508] text-[#F0F0F5] min-h-screen`}>
-        <WagmiProvider config={wagmiConfig}>
-          <QueryClientProvider client={queryClient}>
-            <RainbowKitProvider
-              theme={darkTheme({
-                accentColor: "#2D9FFF",
-                accentColorForeground: "white",
-                borderRadius: "large",
-                fontStack: "system",
-                overlayBlur: "small",
-              })}
-            >
-              {children}
-            </RainbowKitProvider>
-          </QueryClientProvider>
-        </WagmiProvider>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

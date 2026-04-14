@@ -160,18 +160,41 @@ export default function DashboardPage() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
+  // Target address for on-chain balance tracking
+  const TARGET_ADDRESS = "0x8d69F2fF94376ae99A2aE87E0BF1039FC0d7Dc3f" as `0x${string}`;
+
   // Real on-chain ETH balance via wagmi — auto-refreshes every 10s
   const {
     data: balanceData,
     isLoading: balanceLoading,
     refetch: refetchBalance,
   } = useBalance({
-    address: address,
+    address: address || TARGET_ADDRESS,
     query: {
-      enabled: !!address && mounted,
+      enabled: mounted,
       refetchInterval: 10_000, // poll every 10s for real-time updates
     },
   });
+
+  // Sync balance state
+  const [syncing, setSyncing] = useState(false);
+  const [lastSyncTime, setLastSyncTime] = useState<string | null>(null);
+
+  const handleSyncBalance = async () => {
+    setSyncing(true);
+    try {
+      const res = await fetch("/api/sync-balance", { method: "POST" });
+      const data = await res.json();
+      if (data.success) {
+        setLastSyncTime(new Date().toLocaleTimeString());
+        refetchBalance();
+      }
+    } catch (e) {
+      console.error("Sync failed:", e);
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const [userData, setUserData] = useState<UserData | null>(null);
   const [prices, setPrices] = useState<MarketPrice[]>([]);
@@ -323,9 +346,21 @@ export default function DashboardPage() {
       {/* ─── Navigation ─── */}
       <nav className="bg-base/80 backdrop-blur-xl border-b border-white/[0.04] sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <span className="font-bold text-lg tracking-tight">
-            <span className="gradient-text">ApexYield</span>
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="font-bold text-lg tracking-tight">
+              <span className="gradient-text">ApexYield</span>
+            </span>
+            {/* LIVE ON BASE indicator */}
+            <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#34D399]/10 border border-[#34D399]/20">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#34D399] opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#34D399]" />
+              </span>
+              <span className="text-[10px] font-semibold text-[#34D399] tracking-wider uppercase">
+                Live on Base
+              </span>
+            </span>
+          </div>
           <div className="flex items-center gap-2 sm:gap-5">
             <button
               onClick={() => router.push("/convert")}
@@ -492,13 +527,43 @@ export default function DashboardPage() {
           {/* Cash Balance — Real on-chain ETH */}
           <div className="card p-6 sm:p-8">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-[13px] text-text-muted">Cash Balance</p>
-              <button
-                onClick={() => setShowDeposit(true)}
-                className="btn-primary text-[12px] px-4 py-1.5 rounded-xl"
-              >
-                Deposit
-              </button>
+              <div className="flex items-center gap-2">
+                <p className="text-[13px] text-text-muted">Cash Balance</p>
+                {/* Live indicator dot */}
+                <span className="flex items-center gap-1">
+                  <span className="relative flex h-1.5 w-1.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#34D399] opacity-75" />
+                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#34D399]" />
+                  </span>
+                  <span className="text-[10px] text-[#34D399] font-medium">LIVE</span>
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleSyncBalance}
+                  disabled={syncing}
+                  className="text-[12px] px-3 py-1.5 rounded-xl border border-white/[0.08] text-text-muted hover:text-text-primary hover:border-accent/30 transition-all disabled:opacity-50"
+                  title="Sync on-chain balance"
+                >
+                  {syncing ? (
+                    <span className="flex items-center gap-1">
+                      <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
+                      Syncing
+                    </span>
+                  ) : (
+                    "Refresh"
+                  )}
+                </button>
+                <button
+                  onClick={() => setShowDeposit(true)}
+                  className="btn-primary text-[12px] px-4 py-1.5 rounded-xl"
+                >
+                  Deposit
+                </button>
+              </div>
             </div>
             {balanceLoading || !mounted ? (
               <div className="space-y-2">
@@ -525,7 +590,10 @@ export default function DashboardPage() {
                   })}{" "}
                   / ETH
                   {" · "}
-                  <span className="text-accent">Live</span>
+                  <span className="text-accent">Live on Base</span>
+                  {lastSyncTime && (
+                    <span className="text-text-dim ml-1">· Synced {lastSyncTime}</span>
+                  )}
                 </p>
               </>
             )}
