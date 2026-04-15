@@ -210,6 +210,27 @@ model DepositAddress {
 }
 
 // ---------------------------------------------------------------------------
+// APY CACHE — Real-time vault APY data from DeFi aggregators
+// Caches Yearn, Aave, Lido APY data with 5-minute TTL
+// ---------------------------------------------------------------------------
+
+model APYCache {
+  id           String   @id @default(cuid())
+  vaultId      String   @unique // e.g. "vault-usdt-stability"
+  asset        String   // e.g. "USDT"
+  apyBps       Int      // APY in basis points (e.g., 850 = 8.50%)
+  tvlUsd       BigInt   // Total value locked in USD cents
+  source       String   // "yearn", "aave", "lido", "cache", "fallback"
+  riskRating   String?  // e.g. "Very Safe", "Low", "Medium"
+  expiresAt    DateTime // cache expiration time
+  updatedAt    DateTime @updatedAt
+  createdAt    DateTime @default(now())
+
+  @@index([expiresAt])
+  @@index([source])
+}
+
+// ---------------------------------------------------------------------------
 // PRICE CACHE — Layer 2 DB cache for crypto prices
 // Prevents CoinGecko rate-limit exhaustion across server restarts
 // ---------------------------------------------------------------------------
