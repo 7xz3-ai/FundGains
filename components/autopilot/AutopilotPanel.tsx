@@ -1,1 +1,229 @@
-"use client\";\n\n// components/autopilot/AutopilotPanel.tsx\n// AI-driven portfolio rebalancing UI\n// Shows recommendations and allows execution\n\nimport React, { useState } from \"react\";\nimport { useAutopilot } from \"@/hooks/useAutopilot\";\nimport {\n  TrendingUp,\n  AlertCircle,\n  CheckCircle,\n  Loader,\n  Zap,\n} from \"lucide-react\";\n\ninterface AutopilotPanelProps {\n  userId: string;\n}\n\nexport default function AutopilotPanel({ userId }: AutopilotPanelProps) {\n  const [riskProfile, setRiskProfile] = useState<\"conservative\" | \"balanced\" | \"aggressive\">(\n    \"balanced\"\n  );\n\n  const {\n    recommendation,\n    isLoadingRecommendation,\n    isExecuting,\n    executionError,\n    executeRebalancing,\n    potentialYieldGain,\n    isRebalancingNeeded,\n  } = useAutopilot(userId, riskProfile);\n\n  const handleExecute = async () => {\n    try {\n      await executeRebalancing();\n    } catch (error) {\n      console.error(\"Rebalancing failed:\", error);\n    }\n  };\n\n  return (\n    <div className=\"w-full max-w-2xl mx-auto\">\n      {/* Card Container */}\n      <div className=\"bg-white/5 border border-white/10 rounded-3xl p-8 backdrop-blur-xl\">\n        {/* Header */}\n        <div className=\"flex items-center gap-3 mb-8\">\n          <Zap className=\"w-6 h-6 text-yellow-400\" />\n          <h2 className=\"text-2xl font-bold text-white\">Autopilot Rebalancing</h2>\n        </div>\n\n        {/* Risk Profile Selector */}\n        <div className=\"mb-8\">\n          <label className=\"block text-sm text-white/60 mb-3\">Risk Profile</label>\n          <div className=\"flex gap-3\">\n            {([\"conservative\", \"balanced\", \"aggressive\"] as const).map((profile) => (\n              <button\n                key={profile}\n                onClick={() => setRiskProfile(profile)}\n                className={`px-4 py-2 rounded-lg font-semibold transition-all ${\n                  riskProfile === profile\n                    ? \"bg-blue-500 text-white shadow-lg shadow-blue-500/50\"\n                    : \"bg-white/10 text-white/60 hover:bg-white/20\"\n                }`}\n              >\n                {profile.charAt(0).toUpperCase() + profile.slice(1)}\n              </button>\n            ))}\n          </div>\n        </div>\n\n        {/* Loading State */}\n        {isLoadingRecommendation && (\n          <div className=\"bg-blue-500/20 border border-blue-500/50 rounded-lg p-4 flex gap-3 mb-6\">\n            <Loader className=\"w-5 h-5 text-blue-400 animate-spin flex-shrink-0\" />\n            <p className=\"text-blue-200\">Analyzing your portfolio...</p>\n          </div>\n        )}\n\n        {/* Recommendation Display */}\n        {recommendation && !isLoadingRecommendation && (\n          <>\n            {/* Yield Gain */}\n            <div className=\"bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/50 rounded-lg p-6 mb-6\">\n              <div className=\"flex items-center justify-between\">\n                <div>\n                  <p className=\"text-white/60 text-sm mb-1\">Estimated Yield Increase</p>\n                  <p className=\"text-3xl font-bold text-white\">\n                    +{potentialYieldGain.toFixed(2)}%\n                  </p>\n                </div>\n                <TrendingUp className=\"w-12 h-12 text-green-400\" />\n              </div>\n            </div>\n\n            {/* Current vs Target Allocation */}\n            <div className=\"mb-6\">\n              <h3 className=\"text-lg font-semibold text-white mb-4\">Portfolio Rebalancing</h3>\n              <div className=\"space-y-3\">\n                {Object.entries(recommendation.currentAllocation).map(([asset, current]) => {\n                  const target = recommendation.targetAllocation[asset] || 0;\n                  const diff = target - current;\n\n                  return (\n                    <div key={asset} className=\"bg-white/5 rounded-lg p-4\">\n                      <div className=\"flex justify-between items-center mb-2\">\n                        <span className=\"font-semibold text-white\">{asset}</span>\n                        <span className={`text-sm font-bold ${\n                          diff > 0 ? \"text-green-400\" : diff < 0 ? \"text-red-400\" : \"text-white/60\"\n                        }`}>\n                          {diff > 0 ? \"+\" : \"\"}{diff.toFixed(1)}%\n                        </span>\n                      </div>\n                      <div className=\"flex gap-2 items-center\">\n                        <div className=\"flex-1 bg-white/10 rounded-full h-2 overflow-hidden\">\n                          <div\n                            className=\"bg-blue-500 h-full\"\n                            style={{ width: `${current}%` }}\n                          />\n                        </div>\n                        <span className=\"text-xs text-white/60 w-12 text-right\">\n                          {current.toFixed(1)}%\n                        </span>\n                      </div>\n                      <div className=\"flex gap-2 items-center mt-1\">\n                        <div className=\"flex-1 bg-white/10 rounded-full h-2 overflow-hidden\">\n                          <div\n                            className=\"bg-green-500 h-full\"\n                            style={{ width: `${target}%` }}\n                          />\n                        </div>\n                        <span className=\"text-xs text-white/60 w-12 text-right\">\n                          {target.toFixed(1)}%\n                        </span>\n                      </div>\n                    </div>\n                  );\n                })}\n              </div>\n            </div>\n\n            {/* Suggested Swaps */}\n            {recommendation.suggestedSwaps.length > 0 && (\n              <div className=\"mb-6\">\n                <h3 className=\"text-lg font-semibold text-white mb-4\">Suggested Swaps</h3>\n                <div className=\"space-y-2\">\n                  {recommendation.suggestedSwaps.map((swap, idx) => (\n                    <div key={idx} className=\"bg-white/5 rounded-lg p-3 flex items-center gap-3\">\n                      <div className=\"flex-1\">\n                        <p className=\"text-white font-semibold\">\n                          {swap.fromAsset} → {swap.toAsset}\n                        </p>\n                        <p className=\"text-xs text-white/60\">{swap.reason}</p>\n                      </div>\n                      <div className=\"text-right\">\n                        <p className=\"text-green-400 font-bold\">\n                          +{(swap.expectedYieldGain / 100).toFixed(2)}% APY\n                        </p>\n                      </div>\n                    </div>\n                  ))}\n                </div>\n              </div>\n            )}\n\n            {/* Confidence Score */}\n            <div className=\"bg-white/5 rounded-lg p-4 mb-6\">\n              <div className=\"flex justify-between items-center\">\n                <span className=\"text-white/60\">Recommendation Confidence</span>\n                <div className=\"flex items-center gap-2\">\n                  <div className=\"w-32 bg-white/10 rounded-full h-2\">\n                    <div\n                      className=\"bg-blue-500 h-full rounded-full\"\n                      style={{ width: `${recommendation.confidence}%` }}\n                    />\n                  </div>\n                  <span className=\"text-white font-bold w-12 text-right\">\n                    {recommendation.confidence}%\n                  </span>\n                </div>\n              </div>\n            </div>\n\n            {/* Error Message */}\n            {executionError && (\n              <div className=\"bg-red-500/20 border border-red-500/50 rounded-lg p-4 mb-6 flex gap-3\">\n                <AlertCircle className=\"w-5 h-5 text-red-400 flex-shrink-0\" />\n                <p className=\"text-sm text-red-200\">{executionError}</p>\n              </div>\n            )}\n\n            {/* Action Button */}\n            <button\n              onClick={handleExecute}\n              disabled={!isRebalancingNeeded || isExecuting}\n              className={`w-full font-bold py-3 px-4 rounded-lg transition-all ${\n                isRebalancingNeeded && !isExecuting\n                  ? \"bg-gradient-to-r from-blue-500 to-cyan-500 text-white hover:shadow-lg hover:shadow-blue-500/50\"\n                  : \"bg-gray-500 text-white/50 cursor-not-allowed\"\n              }`}\n            >\n              {isExecuting ? (\n                <span className=\"flex items-center justify-center gap-2\">\n                  <Loader className=\"w-5 h-5 animate-spin\" />\n                  Executing Rebalancing...\n                </span>\n              ) : isRebalancingNeeded ? (\n                \"Execute Rebalancing\"\n              ) : (\n                \"Portfolio Optimized\"\n              )}\n            </button>\n          </>\n        )}\n\n        {/* No Recommendation */}\n        {!recommendation && !isLoadingRecommendation && (\n          <div className=\"bg-white/5 border border-white/10 rounded-lg p-6 text-center\">\n            <AlertCircle className=\"w-8 h-8 text-white/40 mx-auto mb-3\" />\n            <p className=\"text-white/60\">Unable to load recommendations</p>\n          </div>\n        )}\n      </div>\n    </div>\n  );\n}\n
+"use client";
+
+// components/autopilot/AutopilotPanel.tsx
+// AI-driven portfolio rebalancing UI
+// Shows recommendations and allows execution
+
+import React, { useState } from "react";
+import { useAutopilot } from "@/hooks/useAutopilot";
+import {
+  TrendingUp,
+  AlertCircle,
+  CheckCircle,
+  Loader,
+  Zap,
+} from "lucide-react";
+
+interface AutopilotPanelProps {
+  userId: string;
+}
+
+export default function AutopilotPanel({ userId }: AutopilotPanelProps) {
+  const [riskProfile, setRiskProfile] = useState<"conservative" | "balanced" | "aggressive">(
+    "balanced"
+  );
+
+  const {
+    recommendation,
+    isLoadingRecommendation,
+    isExecuting,
+    executionError,
+    executeRebalancing,
+    potentialYieldGain,
+    isRebalancingNeeded,
+  } = useAutopilot(userId, riskProfile);
+
+  const handleExecute = async () => {
+    try {
+      await executeRebalancing();
+    } catch (error) {
+      console.error("Rebalancing failed:", error);
+    }
+  };
+
+  return (
+    <div className="w-full max-w-2xl mx-auto">
+      {/* Card Container */}
+      <div className="bg-white/5 border border-white/10 rounded-3xl p-8 backdrop-blur-xl">
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-8">
+          <Zap className="w-6 h-6 text-yellow-400" />
+          <h2 className="text-2xl font-bold text-white">Autopilot Rebalancing</h2>
+        </div>
+
+        {/* Risk Profile Selector */}
+        <div className="mb-8">
+          <label className="block text-sm text-white/60 mb-3">Risk Profile</label>
+          <div className="flex gap-3">
+            {(["conservative", "balanced", "aggressive"] as const).map((profile) => (
+              <button
+                key={profile}
+                onClick={() => setRiskProfile(profile)}
+                className={`px-4 py-2 rounded-lg font-semibold transition-all ${
+                  riskProfile === profile
+                    ? "bg-blue-500 text-white shadow-lg shadow-blue-500/50"
+                    : "bg-white/10 text-white/60 hover:bg-white/20"
+                }`}
+              >
+                {profile.charAt(0).toUpperCase() + profile.slice(1)}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Loading State */}
+        {isLoadingRecommendation && (
+          <div className="bg-blue-500/20 border border-blue-500/50 rounded-lg p-4 flex gap-3 mb-6">
+            <Loader className="w-5 h-5 text-blue-400 animate-spin flex-shrink-0" />
+            <p className="text-blue-200">Analyzing your portfolio...</p>
+          </div>
+        )}
+
+        {/* Recommendation Display */}
+        {recommendation && !isLoadingRecommendation && (
+          <>
+            {/* Yield Gain */}
+            <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/50 rounded-lg p-6 mb-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-white/60 text-sm mb-1">Estimated Yield Increase</p>
+                  <p className="text-3xl font-bold text-white">
+                    +{potentialYieldGain.toFixed(2)}%
+                  </p>
+                </div>
+                <TrendingUp className="w-12 h-12 text-green-400" />
+              </div>
+            </div>
+
+            {/* Current vs Target Allocation */}
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold text-white mb-4">Portfolio Rebalancing</h3>
+              <div className="space-y-3">
+                {Object.entries(recommendation.currentAllocation).map(([asset, current]) => {
+                  const target = recommendation.targetAllocation[asset] || 0;
+                  const diff = target - current;
+
+                  return (
+                    <div key={asset} className="bg-white/5 rounded-lg p-4">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="font-semibold text-white">{asset}</span>
+                        <span className={`text-sm font-bold ${
+                          diff > 0 ? "text-green-400" : diff < 0 ? "text-red-400" : "text-white/60"
+                        }`}>
+                          {diff > 0 ? "+" : ""}{diff.toFixed(1)}%
+                        </span>
+                      </div>
+                      <div className="flex gap-2 items-center">
+                        <div className="flex-1 bg-white/10 rounded-full h-2 overflow-hidden">
+                          <div
+                            className="bg-blue-500 h-full"
+                            style={{ width: `${current}%` }}
+                          />
+                        </div>
+                        <span className="text-xs text-white/60 w-12 text-right">
+                          {current.toFixed(1)}%
+                        </span>
+                      </div>
+                      <div className="flex gap-2 items-center mt-1">
+                        <div className="flex-1 bg-white/10 rounded-full h-2 overflow-hidden">
+                          <div
+                            className="bg-green-500 h-full"
+                            style={{ width: `${target}%` }}
+                          />
+                        </div>
+                        <span className="text-xs text-white/60 w-12 text-right">
+                          {target.toFixed(1)}%
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Suggested Swaps */}
+            {recommendation.suggestedSwaps.length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-white mb-4">Suggested Swaps</h3>
+                <div className="space-y-2">
+                  {recommendation.suggestedSwaps.map((swap, idx) => (
+                    <div key={idx} className="bg-white/5 rounded-lg p-3 flex items-center gap-3">
+                      <div className="flex-1">
+                        <p className="text-white font-semibold">
+                          {swap.fromAsset} → {swap.toAsset}
+                        </p>
+                        <p className="text-xs text-white/60">{swap.reason}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-green-400 font-bold">
+                          +{(swap.expectedYieldGain / 100).toFixed(2)}% APY
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Confidence Score */}
+            <div className="bg-white/5 rounded-lg p-4 mb-6">
+              <div className="flex justify-between items-center">
+                <span className="text-white/60">Recommendation Confidence</span>
+                <div className="flex items-center gap-2">
+                  <div className="w-32 bg-white/10 rounded-full h-2">
+                    <div
+                      className="bg-blue-500 h-full rounded-full"
+                      style={{ width: `${recommendation.confidence}%` }}
+                    />
+                  </div>
+                  <span className="text-white font-bold w-12 text-right">
+                    {recommendation.confidence}%
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Error Message */}
+            {executionError && (
+              <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-4 mb-6 flex gap-3">
+                <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
+                <p className="text-sm text-red-200">{executionError}</p>
+              </div>
+            )}
+
+            {/* Action Button */}
+            <button
+              onClick={handleExecute}
+              disabled={!isRebalancingNeeded || isExecuting}
+              className={`w-full font-bold py-3 px-4 rounded-lg transition-all ${
+                isRebalancingNeeded && !isExecuting
+                  ? "bg-gradient-to-r from-blue-500 to-cyan-500 text-white hover:shadow-lg hover:shadow-blue-500/50"
+                  : "bg-gray-500 text-white/50 cursor-not-allowed"
+              }`}
+            >
+              {isExecuting ? (
+                <span className="flex items-center justify-center gap-2">
+                  <Loader className="w-5 h-5 animate-spin" />
+                  Executing Rebalancing...
+                </span>
+              ) : isRebalancingNeeded ? (
+                "Execute Rebalancing"
+              ) : (
+                "Portfolio Optimized"
+              )}
+            </button>
+          </>
+        )}
+
+        {/* No Recommendation */}
+        {!recommendation && !isLoadingRecommendation && (
+          <div className="bg-white/5 border border-white/10 rounded-lg p-6 text-center">
+            <AlertCircle className="w-8 h-8 text-white/40 mx-auto mb-3" />
+            <p className="text-white/60">Unable to load recommendations</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+

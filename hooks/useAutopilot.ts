@@ -1,1 +1,116 @@
-// hooks/useAutopilot.ts\n// React hook for AI-driven portfolio rebalancing\n// Fetches recommendations and executes rebalancing\n\nimport { useState, useCallback } from \"react\";\nimport { useQuery, useMutation } from \"@tanstack/react-query\";\nimport { useAccount } from \"wagmi\";\n\nexport interface RebalancingRecommendation {\n  currentAllocation: Record<string, number>;\n  targetAllocation: Record<string, number>;\n  suggestedSwaps: Array<{\n    fromAsset: string;\n    toAsset: string;\n    reason: string;\n    expectedYieldGain: number;\n  }>;\n  estimatedYieldIncrease: number;\n  riskAdjustment: \"conservative\" | \"balanced\" | \"aggressive\";\n  confidence: number;\n}\n\nexport function useAutopilot(\n  userId: string,\n  riskProfile: \"conservative\" | \"balanced\" | \"aggressive\" = \"balanced\"\n) {\n  const { address: userAddress } = useAccount();\n  const [isExecuting, setIsExecuting] = useState(false);\n  const [executionError, setExecutionError] = useState<string | null>(null);\n\n  // Fetch rebalancing recommendation\n  const { data: recommendation, isLoading: isLoadingRecommendation } = useQuery({\n    queryKey: [\"autopilot-recommendation\", userId, riskProfile],\n    queryFn: async () => {\n      if (!userAddress) return null;\n\n      const res = await fetch(\"/api/autopilot\", {\n        method: \"POST\",\n        headers: { \"Content-Type\": \"application/json\" },\n        body: JSON.stringify({\n          action: \"analyze\",\n          userId,\n          userAddress,\n          riskProfile,\n        }),\n      });\n\n      if (!res.ok) throw new Error(\"Failed to fetch recommendation\");\n\n      const data = await res.json();\n      return data.recommendation as RebalancingRecommendation;\n    },\n    enabled: !!(userId && userAddress),\n    staleTime: 5 * 60_000, // 5 minutes\n  });\n\n  // Execute rebalancing\n  const executeRebalancing = useCallback(async () => {\n    if (!userAddress) return;\n\n    setIsExecuting(true);\n    setExecutionError(null);\n\n    try {\n      const res = await fetch(\"/api/autopilot\", {\n        method: \"POST\",\n        headers: { \"Content-Type\": \"application/json\" },\n        body: JSON.stringify({\n          action: \"execute\",\n          userId,\n          userAddress,\n        }),\n      });\n\n      if (!res.ok) throw new Error(\"Rebalancing execution failed\");\n\n      const data = await res.json();\n\n      if (!data.success) {\n        throw new Error(data.error || \"Unknown error\");\n      }\n\n      return {\n        success: true,\n        swapsExecuted: data.swapsExecuted,\n        totalYieldGain: data.totalYieldGain,\n      };\n    } catch (error) {\n      const errorMsg = String(error);\n      setExecutionError(errorMsg);\n      throw error;\n    } finally {\n      setIsExecuting(false);\n    }\n  }, [userId, userAddress]);\n\n  // Calculate potential yield gain\n  const potentialYieldGain = recommendation\n    ? recommendation.estimatedYieldIncrease\n    : 0;\n\n  // Check if rebalancing is recommended\n  const isRebalancingNeeded =\n    recommendation && recommendation.suggestedSwaps.length > 0;\n\n  return {\n    recommendation,\n    isLoadingRecommendation,\n    isExecuting,\n    executionError,\n    executeRebalancing,\n    potentialYieldGain,\n    isRebalancingNeeded,\n  };\n}\n
+// hooks/useAutopilot.ts
+// React hook for AI-driven portfolio rebalancing
+// Fetches recommendations and executes rebalancing
+
+import { useState, useCallback } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { useAccount } from "wagmi";
+
+export interface RebalancingRecommendation {
+  currentAllocation: Record<string, number>;
+  targetAllocation: Record<string, number>;
+  suggestedSwaps: Array<{
+    fromAsset: string;
+    toAsset: string;
+    reason: string;
+    expectedYieldGain: number;
+  }>;
+  estimatedYieldIncrease: number;
+  riskAdjustment: "conservative" | "balanced" | "aggressive";
+  confidence: number;
+}
+
+export function useAutopilot(
+  userId: string,
+  riskProfile: "conservative" | "balanced" | "aggressive" = "balanced"
+) {
+  const { address: userAddress } = useAccount();
+  const [isExecuting, setIsExecuting] = useState(false);
+  const [executionError, setExecutionError] = useState<string | null>(null);
+
+  // Fetch rebalancing recommendation
+  const { data: recommendation, isLoading: isLoadingRecommendation } = useQuery({
+    queryKey: ["autopilot-recommendation", userId, riskProfile],
+    queryFn: async () => {
+      if (!userAddress) return null;
+
+      const res = await fetch("/api/autopilot", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "analyze",
+          userId,
+          userAddress,
+          riskProfile,
+        }),
+      });
+
+      if (!res.ok) throw new Error("Failed to fetch recommendation");
+
+      const data = await res.json();
+      return data.recommendation as RebalancingRecommendation;
+    },
+    enabled: !!(userId && userAddress),
+    staleTime: 5 * 60_000, // 5 minutes
+  });
+
+  // Execute rebalancing
+  const executeRebalancing = useCallback(async () => {
+    if (!userAddress) return;
+
+    setIsExecuting(true);
+    setExecutionError(null);
+
+    try {
+      const res = await fetch("/api/autopilot", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "execute",
+          userId,
+          userAddress,
+        }),
+      });
+
+      if (!res.ok) throw new Error("Rebalancing execution failed");
+
+      const data = await res.json();
+
+      if (!data.success) {
+        throw new Error(data.error || "Unknown error");
+      }
+
+      return {
+        success: true,
+        swapsExecuted: data.swapsExecuted,
+        totalYieldGain: data.totalYieldGain,
+      };
+    } catch (error) {
+      const errorMsg = String(error);
+      setExecutionError(errorMsg);
+      throw error;
+    } finally {
+      setIsExecuting(false);
+    }
+  }, [userId, userAddress]);
+
+  // Calculate potential yield gain
+  const potentialYieldGain = recommendation
+    ? recommendation.estimatedYieldIncrease
+    : 0;
+
+  // Check if rebalancing is recommended
+  const isRebalancingNeeded =
+    recommendation && recommendation.suggestedSwaps.length > 0;
+
+  return {
+    recommendation,
+    isLoadingRecommendation,
+    isExecuting,
+    executionError,
+    executeRebalancing,
+    potentialYieldGain,
+    isRebalancingNeeded,
+  };
+}
+

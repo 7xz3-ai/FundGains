@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
   const parsed = QuoteSchema.safeParse(params);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: parsed.error.errors },
+      { error: parsed.error.issues },
       { status: 400 }
     );
   }
@@ -94,7 +94,7 @@ export async function POST(req: NextRequest) {
   const parsed = ExecuteSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: parsed.error.errors },
+      { error: parsed.error.issues },
       { status: 400 }
     );
   }
@@ -122,10 +122,10 @@ export async function POST(req: NextRequest) {
       data: {
         userId: parsed.data.userId,
         type: "SWAP",
+        idempotencyKey: `swap-${parsed.data.txHash}`,
         amountCents: BigInt(Math.round(parseFloat(parsed.data.toAmount) * 100)),
-        description: `Swapped ${parsed.data.fromToken.slice(0, 6)} for ${parsed.data.toToken.slice(0, 6)}`,
         txHash: parsed.data.txHash,
-        status: "completed",
+        status: "CONFIRMED",
       },
     });
 

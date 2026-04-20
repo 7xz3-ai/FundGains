@@ -93,7 +93,6 @@ export async function analyzePortfolioHealth(
     // Fetch user's staked assets
     const stakedAssets = await prisma.stakedAsset.findMany({
       where: { userId },
-      include: { vault: true },
     });
 
     if (stakedAssets.length === 0) {
@@ -110,15 +109,15 @@ export async function analyzePortfolioHealth(
 
     // Calculate current allocation
     const totalStaked = stakedAssets.reduce(
-      (sum, asset) => sum + Number(asset.amountCents),
+      (sum, asset) => sum + Number(asset.principalCents),
       0
     );
 
     const currentAllocation: Record<string, number> = {};
     for (const asset of stakedAssets) {
-      const symbol = asset.vault?.assetSymbol || "UNKNOWN";
+      const symbol = asset.assetSymbol || "UNKNOWN";
       currentAllocation[symbol] =
-        (Number(asset.amountCents) / totalStaked) * 100;
+        (Number(asset.principalCents) / totalStaked) * 100;
     }
 
     // Get optimal allocation based on yields
@@ -175,16 +174,16 @@ export async function analyzePortfolioHealth(
     // Calculate estimated yield increase
     const currentYield = stakedAssets.reduce((sum, asset) => {
       const apy = apyData.find(
-        (a) => a.asset === asset.vault?.assetSymbol
+        (a) => a.asset === asset.assetSymbol
       )?.apyBps || 0;
-      return sum + (Number(asset.amountCents) * apy) / 10000;
+      return sum + (Number(asset.principalCents) * apy) / 10000;
     }, 0);
 
     const projectedYield = stakedAssets.reduce((sum, asset) => {
-      const symbol = asset.vault?.assetSymbol || "UNKNOWN";
+      const symbol = asset.assetSymbol || "UNKNOWN";
       const targetAlloc = targetAllocation[symbol] || 0;
       const apy = apyData.find((a) => a.asset === symbol)?.apyBps || 0;
-      return sum + (Number(asset.amountCents) * targetAlloc * apy) / 10000;
+      return sum + (Number(asset.principalCents) * targetAlloc * apy) / 10000;
     }, 0);
 
     const estimatedYieldIncrease =
